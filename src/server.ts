@@ -8,7 +8,10 @@ console.log("Attempting to connect to MongoDB...");
 
 mongoose.set('debug', true); // Enable mongoose debug mode
 
-mongoose.connect(env.MONGO_CONNECTION_STRING!, {
+mongoose.connect(env.LOCAL_MONGO!, {
+  // tls: true,  // Enable TLS
+  // tlsAllowInvalidCertificates: true, // (Optional) If using self-signed certs
+  // ssl: true,  // Enable SSL
   serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds instead of hanging indefinitely
 })
   .then(() => {

@@ -1,17 +1,42 @@
 import dotenv from "dotenv";
 dotenv.config();
 import express, { Express, NextFunction, Request, Response } from "express";
-import notesRoutes from "./routes/notes";
+import path from "path";
 import morgan from "morgan";
 import createHttpError, { isHttpError } from "http-errors";
+import session from "express-session";
+import flash from "connect-flash";
+import methodOverride from "method-override";
+import helmet from "helmet";
+import mongoSanitize from "express-mongo-sanitize";
+import MongoStore from "connect-mongo";
+
+// Import Routes
+import clinicianRouter from "./routes/clinicianRouter";
+import adminRouter from "./routes/adminRouter";
+import clinicRouter from "./routes/clinicRouter";
 
 const app: Express = express();
 
-app.use(morgan("dev"));
+// Set EJS as the templating engine
+app.engine("ejs", require("ejs-mate"));
+app.set("view engine", "ejs");
 
+// Set views directory
+app.set("views", path.join(__dirname, "views"));
+
+// Middleware
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(methodOverride("_method"));
+app.use(morgan("dev"));
+app.use(express.static(path.join(__dirname, "public")));
+app.use(mongoSanitize());
 
-app.use("/api/notes", notesRoutes);
+// Router
+app.use("/clinician", clinicianRouter);
+app.use("/admin", adminRouter);
+app.use("/clinic", clinicRouter);
 
 app.use((req, res, next) => { next(createHttpError(404, "Enpoint Not found")); });
 
