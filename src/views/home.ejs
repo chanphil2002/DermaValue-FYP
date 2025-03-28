@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinician</title>
+</head>
+<body>
+    <h1>Clinicians List</h1>
+
+    <!-- Clincinian Submission Form -->
+    <form action="/clinicians" method="POST">
+        <input type="text" name="email" placeholder="email" required>
+        <textarea name="name" placeholder="name" required></textarea>
+        <button type="submit">Add Clinician</button>
+    </form>
+
+    <!-- Display Clinicians -->
+    <ul>
+        <% clinicians.forEach(clinician => { %>
+            <li><strong><%= clinician.email %></strong>: <%= clinician.name %></li>
+        <% }); %>
+    </ul>
+</body>
+</html>

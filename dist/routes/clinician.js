@@ -36,29 +36,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
 const express_1 = __importDefault(require("express"));
-const clinician_1 = __importDefault(require("./routes/clinician"));
-const morgan_1 = __importDefault(require("morgan"));
-const http_errors_1 = __importStar(require("http-errors"));
-const path_1 = __importDefault(require("path"));
-const app = (0, express_1.default)();
-app.set("view engine", "ejs");
-app.set("views", path_1.default.join(__dirname, "views"));
-app.use((0, morgan_1.default)("dev"));
-app.use(express_1.default.json());
-app.use("/", clinician_1.default);
-app.use((req, res, next) => { next((0, http_errors_1.default)(404, "Enpoint Not found")); });
-app.use((error, req, res, next) => {
-    console.error(error);
-    let errorMessage = "An error occurred";
-    let statusCode = 500;
-    if ((0, http_errors_1.isHttpError)(error)) {
-        errorMessage = error.message;
-        statusCode = error.status;
-    }
-    res.status(statusCode).json({ message: errorMessage });
-});
-exports.default = app;
-//# sourceMappingURL=app.js.map
+const ClinicianController = __importStar(require("../controllers/clinician"));
+const router = express_1.default.Router();
+router.get("/", ClinicianController.getClinicians);
+router.get("/:id", ClinicianController.getClinician);
+router.post("/", ClinicianController.createClinician);
+router.patch("/:id", ClinicianController.updateClinician);
+router.delete("/:id", ClinicianController.deleteClinician);
+exports.default = router;
+//# sourceMappingURL=clinician.js.map
