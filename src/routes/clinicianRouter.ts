@@ -1,25 +1,17 @@
 import express from "express";
-import * as ClinicianController from "../controllers/clinicianController";
-import { authenticateJWT } from "../middleware/auth"; // Make sure you import authenticateJWT
+import * as clinicianController from "../controllers/clinicianController";
+import { authenticateJWT, authorizeRole } from "../middleware/auth";
+import { UserRole } from "../enums/userRole";
 
 const router = express.Router();
 
-// Get all clinicians - only accessible to clinicians
-router.get("/", authenticateJWT, ClinicianController.getClinicians);
+router.get("/", authenticateJWT, authorizeRole([UserRole.CLINICIAN]), clinicianController.getClinicians);
 
-// Get a single clinician by ID - accessible to clinicians
-router.get("/:id", authenticateJWT, ClinicianController.getClinician);
+router.get("/:id", authenticateJWT, authorizeRole([UserRole.CLINICIAN]), clinicianController.getClinician);
 
-// Create a clinician - only accessible to admins (or whoever you decide)
-router.post("/", authenticateJWT, ClinicianController.createClinician);
+// router.patch<{ id: string }>("/:id", authenticateJWT, ClinicianController.updateClinician);
 
-// Register clinician (pending approval)
-router.post("/register", ClinicianController.registerClinician);
-
-// Update a clinician - only accessible to clinicians
-router.patch<{ id: string }>("/:id", authenticateJWT, ClinicianController.updateClinician);
-
-// Delete a clinician - only accessible to admins
-router.delete("/:id", authenticateJWT, ClinicianController.deleteClinician);
+router.delete("/:id", authenticateJWT, authorizeRole([UserRole.CLINICIAN]), clinicianController.deleteClinician);
 
 export default router;
+

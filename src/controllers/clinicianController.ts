@@ -1,32 +1,7 @@
 import { RequestHandler } from "express";
 import Clinician from "../models/clinician";
 import createHttpError from "http-errors";
-import bcrypt from "bcrypt";
 import mongoose from "mongoose";
-
-export const registerClinician: RequestHandler = async (req, res) => {
-    try {
-      const { username, password, email, clinic, services } = req.body;
-  
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      // Create clinician with pending approval
-      const clinician = new Clinician({
-        username,
-        password: hashedPassword,
-        email,
-        clinic,
-        services,
-        approved: false, // Default to false
-      });
-  
-      await clinician.save();
-      res.status(201).json({ message: "Clinician registered, waiting for admin approval." });
-    } catch (error) {
-      res.status(500).json({ message: "Error registering clinician", error });
-    }
-  };
 
 export const getClinicians: RequestHandler = async (req, res, next) => {
     try {
@@ -72,8 +47,8 @@ export const createClinician: RequestHandler<unknown, unknown, CreateClinicianBo
             email: email, 
             name: name  
         });
-        // res.status(201).json(newClinician);
-        res.redirect("/clinicians");
+        
+        res.status(201).json({ message: "Clinician created successfully", newClinician });
     } catch (error) { next(error); }
 };
 
@@ -86,29 +61,29 @@ interface UpdateClinicianBody {
     name?: string;
 }
 
-export const updateClinician: RequestHandler<UpdateClinicianParams, unknown, UpdateClinicianBody, unknown> = async (req, res, next) => {
-    const clinicianId = req.params.id;
-    console.log("clinicianID" + clinicianId);
-    const newEmail = req.body.email;
-    const newName = req.body.name;
+// export const updateClinician: RequestHandler<UpdateClinicianParams, unknown, UpdateClinicianBody, unknown> = async (req, res, next) => {
+//     const clinicianId = req.params.id;
+//     console.log("clinicianID" + clinicianId);
+//     const newEmail = req.body.email;
+//     const newName = req.body.name;
 
-    try {
-        if(!mongoose.isValidObjectId(clinicianId)){ throw createHttpError(400, "Invalid clinician ID"); }
+//     try {
+//         if(!mongoose.isValidObjectId(clinicianId)){ throw createHttpError(400, "Invalid clinician ID"); }
 
-        if(!newEmail){ throw createHttpError(400, "Email is required"); }
+//         if(!newEmail){ throw createHttpError(400, "Email is required"); }
 
-        const clinician = await Clinician.findById(clinicianId).exec();
+//         const clinician = await Clinician.findById(clinicianId).exec();
 
-        if(!clinician){ throw createHttpError(404, "Clinician not found"); }
+//         if(!clinician){ throw createHttpError(404, "Clinician not found"); }
 
-        clinician.email = newEmail;
+//         clinician.email = newEmail;
 
-        const updatedClinician = await clinician.save();
+//         const updatedClinician = await clinician.save();
 
-        res.status(200).json(updatedClinician);
+//         res.status(200).json(updatedClinician);
 
-    } catch (error) { next(error);}
-};
+//     } catch (error) { next(error);}
+// };
 
 export const deleteClinician: RequestHandler = async (req, res, next) => {
     const clinicianId = req.params.id;

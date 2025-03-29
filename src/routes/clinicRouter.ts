@@ -1,17 +1,17 @@
 import express from "express";
-import * as ClinicController from "../controllers/clinicController";
+import * as clinicController from "../controllers/clinicController";
 import { authenticateJWT } from "../middleware/auth";
 
 const router = express.Router();
 
-router.post("/", ClinicController.createClinic);
+router.post("/", clinicController.createClinic);
 
-router.get("/", ClinicController.getClinics);
+router.get("/", clinicController.getClinics);
 
-router.get("/:id", ClinicController.getClinicById);
+router.get("/:id", clinicController.getClinicById);
 
-router.patch("/:id", authenticateJWT, ClinicController.updateClinic);
+router.patch("/:id", clinicController.updateClinic);
 
-router.delete("/:id", authenticateJWT, ClinicController.deleteClinic);
+router.delete("/:id", clinicController.deleteClinic);
 
 export default router;

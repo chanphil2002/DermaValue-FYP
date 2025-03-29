@@ -13,6 +13,7 @@ mongoose.connect(env.LOCAL_MONGO!, {
   // tlsAllowInvalidCertificates: true, // (Optional) If using self-signed certs
   // ssl: true,  // Enable SSL
   serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds instead of hanging indefinitely
+  autoIndex: process.env.NODE_ENV === "development", // Auto create indexes in development
 })
   .then(() => {
     console.log("[mongo]: Connected to the database");

@@ -9,8 +9,9 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const port = validateEnv_1.default.PORT;
 console.log("Attempting to connect to MongoDB...");
 mongoose_1.default.set('debug', true);
-mongoose_1.default.connect(validateEnv_1.default.MONGO_CONNECTION_STRING, {
+mongoose_1.default.connect(validateEnv_1.default.LOCAL_MONGO, {
     serverSelectionTimeoutMS: 5000,
+    autoIndex: process.env.NODE_ENV === "development",
 })
     .then(() => {
     console.log("[mongo]: Connected to the database");

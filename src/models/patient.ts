@@ -1,11 +1,8 @@
-import { InferSchemaType, Schema, model } from 'mongoose';
+import { Schema, model, InferSchemaType } from 'mongoose';
 
 const patientSchema = new Schema({
-    email: { type: String, required: true },
-    name: { type: String },
-    age: { type: Number },
-    password: { type: String, required: true },
-    role: { type: String, required: true, enum: ["patient", "clinician"] },
+    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    medicalHistory: { type: String },
 }, { timestamps: true });
 
 type Patient = InferSchemaType<typeof patientSchema>;

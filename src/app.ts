@@ -11,10 +11,14 @@ import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
 import MongoStore from "connect-mongo";
 
+
 // Import Routes
+import authRouter from "./routes/authRouter";
 import clinicianRouter from "./routes/clinicianRouter";
 import adminRouter from "./routes/adminRouter";
 import clinicRouter from "./routes/clinicRouter";
+import serviceRouter from "./routes/serviceRouter";
+import appointmentRouter from "./routes/appointmentRouter";
 
 const app: Express = express();
 
@@ -34,9 +38,12 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(mongoSanitize());
 
 // Router
+app.use("/", authRouter);
 app.use("/clinician", clinicianRouter);
 app.use("/admin", adminRouter);
 app.use("/clinic", clinicRouter);
+app.use("/service", serviceRouter);
+app.use("/appointment", appointmentRouter); 
 
 app.use((req, res, next) => { next(createHttpError(404, "Enpoint Not found")); });
 

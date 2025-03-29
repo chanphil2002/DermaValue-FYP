@@ -1,21 +1,12 @@
-import mongoose, { Schema, Document } from "mongoose";
+import { Schema, model, InferSchemaType } from "mongoose";
 
-export interface IClinician extends Document {
-  username: string;
-  password: string;
-  email: string;
-  clinic: mongoose.Schema.Types.ObjectId;
-  services: mongoose.Schema.Types.ObjectId[];
-  approved: boolean;
-}
+const ClinicianSchema = new Schema({
+  user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  clinic: { type: Schema.Types.ObjectId, ref: "Clinic", default: null },
+  services: { type: [{ type: Schema.Types.ObjectId, ref: "Service" }], default: [] },
+  approved: { type: Boolean, default: false },
+}, { timestamps: true });
 
-const ClinicianSchema = new Schema<IClinician>({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  clinic: { type: Schema.Types.ObjectId, ref: "Clinic" },
-  services: [{ type: Schema.Types.ObjectId, ref: "Service" }],
-  approved: { type: Boolean, default: false }, // Pending approval
-});
+type Clinician = InferSchemaType<typeof ClinicianSchema>;
 
-export default mongoose.model<IClinician>("Clinician", ClinicianSchema);
+export default model<Clinician>("Clinician", ClinicianSchema); 

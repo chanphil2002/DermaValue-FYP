@@ -1,13 +1,10 @@
-import mongoose, { Schema, Document } from "mongoose";
+import { Schema, model, InferSchemaType } from "mongoose";
 
-export interface IClinic extends Document {
-  name: string;
-  location: string;
-}
-
-const ClinicSchema = new Schema<IClinic>({
+const ClinicSchema = new Schema({
   name: { type: String, required: true },
   location: { type: String, required: true },
 });
 
-export default mongoose.model<IClinic>("Clinic", ClinicSchema);
+type Clinic = InferSchemaType<typeof ClinicSchema>;
+
+export default model<Clinic>("Clinic", ClinicSchema);

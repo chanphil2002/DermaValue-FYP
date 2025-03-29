@@ -6,6 +6,7 @@ import Clinic from "../models/clinic";
 // **Create a new clinic**
 export const createClinic: RequestHandler = async (req, res, next) => {
   try {
+    console.log(req.user);
     const { name, location } = req.body;
     if (!name || !location) {
       throw createHttpError(400, "Name and location are required");
@@ -21,8 +22,9 @@ export const createClinic: RequestHandler = async (req, res, next) => {
 };
 
 // **Get all clinics**
-export const getClinics: RequestHandler = async (_req, res, next) => {
+export const getClinics: RequestHandler = async (req, res, next) => {
   try {
+    console.log(req.user);
     const clinics = await Clinic.find();
     res.status(200).json(clinics);
   } catch (error) {
