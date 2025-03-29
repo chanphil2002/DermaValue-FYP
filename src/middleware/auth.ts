@@ -1,27 +1,43 @@
-import { Request, Response, NextFunction } from "express";
+import { RequestHandler } from "express";
 import jwt from "jsonwebtoken";
+import createHttpError from "http-errors";
+import { UserRole } from "../enums/userRole";
 
-interface UserPayload {
-  id: string;
-  role: string;
+// Explicitly define a custom user type
+interface AuthenticatedUser {
+  userId: string;
+  role: UserRole;
 }
 
-// **JWT Authentication Middleware**
-export const authenticateJWT = (req: Request, res: Response, next: NextFunction): void => {
-  const token = req.headers.authorization?.split(" ")[1]; // Expect "Bearer <token>"
+// Middleware to verify JWT and extract user data
+export const authenticateJWT: RequestHandler = (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) throw createHttpError(401, "Access denied. No token provided.");
 
-  if (!token) {
-    res.status(401).json({ message: "Unauthorized" });
-    return; // Ensure the response ends here
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as AuthenticatedUser;
+
+    req.user = decoded;
+
+    next();
+  } catch (error) {
+    next(createHttpError(401, "Invalid or expired token"));
   }
+};
 
-  jwt.verify(token, process.env.JWT_SECRET!, (err, user) => {
-    if (err) {
-      res.status(403).json({ message: "Forbidden" });
-      return; // Ensure the response ends here
+// Middleware to check user role
+export const authorizeRole = (allowedRoles: UserRole[]): RequestHandler => {
+  return (req, res, next) => {
+    try {
+      if (!req.user) throw createHttpError(401, "User not authenticated");
+
+      if (!allowedRoles.includes(req.user.role)) {
+        throw createHttpError(403, "Access denied. Insufficient permissions.");
+      }
+
+      next();
+    } catch (error) {
+      next(error);
     }
-
-    req.user = user as UserPayload; // Explicitly cast the user object
-    next(); // Pass control to the next middleware
-  });
+  };
 };

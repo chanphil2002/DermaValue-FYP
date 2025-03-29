@@ -1,1 +1,1 @@
-{"version":3,"file":"disease.js","sourceRoot":"","sources":["../../src/models/disease.ts"],"names":[],"mappings":""}
+{"version":3,"file":"disease.js","sourceRoot":"","sources":["../../src/models/disease.ts"],"names":[],"mappings":";;AAAA,uCAA0D;AAE1D,MAAM,aAAa,GAAG,IAAI,iBAAM,CAAC,EAGhC,EAAE,EAAE,UAAU,EAAE,IAAI,EAAE,CAAC,CAAC;AAIzB,kBAAe,IAAA,gBAAK,EAAU,SAAS,EAAE,aAAa,CAAC,CAAC"}
