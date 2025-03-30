@@ -1,11 +1,11 @@
 import { Schema, model, InferSchemaType } from 'mongoose';
 
-const patientSchema = new Schema({
+const PatientSchema = new Schema({
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
     medicalHistory: { type: String },
 }, { timestamps: true });
 
-type Patient = InferSchemaType<typeof patientSchema>;
+type Patient = InferSchemaType<typeof PatientSchema>;
 
-export default model<Patient>('Patient', patientSchema);
+export default model<Patient>('Patient', PatientSchema);
 

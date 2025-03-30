@@ -1,11 +1,18 @@
-import { InferSchemaType, Schema, model } from 'mongoose';
+import { Schema, model, InferSchemaType } from "mongoose";
 
-const diagnosisSchema = new Schema({
-    // email: { type: String, required: true },
-    // name: { type: String },
-}, { timestamps: true });
+const DiagnosisSchema = new Schema(
+    {
+      appointment: { type: Schema.Types.ObjectId, ref: "Appointment", required: true },
+      clinician: { type: Schema.Types.ObjectId, ref: "Clinician", required: true },
+      disease: { type: Schema.Types.ObjectId, ref: "Disease", required: true },
+      description: { type: String, required: true },
+      treatmentPlan: { type: String, required: true },
+      createdAt: { type: Date, default: Date.now },
+    },
+    { timestamps: true }
+  );
 
-type Diagnosis = InferSchemaType<typeof diagnosisSchema>;
+type Diagnosis = InferSchemaType<typeof DiagnosisSchema>;
 
-export default model<Diagnosis>('Diagnosis', diagnosisSchema);
+export default model<Diagnosis>('Diagnosis', DiagnosisSchema);
 

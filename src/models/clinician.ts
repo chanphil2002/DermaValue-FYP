@@ -9,4 +9,5 @@ const ClinicianSchema = new Schema({
 
 type Clinician = InferSchemaType<typeof ClinicianSchema>;
 
+export type ClinicianDocument = Clinician;
 export default model<Clinician>("Clinician", ClinicianSchema); 

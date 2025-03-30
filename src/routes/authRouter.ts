@@ -10,4 +10,6 @@ router.post("/login/clinician", authController.loginUser(UserRole.CLINICIAN));
 
 router.post("/login/patient", authController.loginUser(UserRole.PATIENT));
 
+router.post("/login/admin", authController.loginUser(UserRole.ADMIN));
+
 export default router;

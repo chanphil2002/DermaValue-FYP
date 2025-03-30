@@ -19,6 +19,7 @@ import adminRouter from "./routes/adminRouter";
 import clinicRouter from "./routes/clinicRouter";
 import serviceRouter from "./routes/serviceRouter";
 import appointmentRouter from "./routes/appointmentRouter";
+import promRouter from "./routes/promRouter";
 
 const app: Express = express();
 
@@ -44,6 +45,7 @@ app.use("/admin", adminRouter);
 app.use("/clinic", clinicRouter);
 app.use("/service", serviceRouter);
 app.use("/appointment", appointmentRouter); 
+app.use("/prom", promRouter);
 
 app.use((req, res, next) => { next(createHttpError(404, "Enpoint Not found")); });
 
