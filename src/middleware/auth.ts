@@ -31,7 +31,7 @@ export const authorizeRole = (allowedRoles: UserRole[]): RequestHandler => {
     try {
       if (!req.user) throw createHttpError(401, "User not authenticated");
 
-      if (!allowedRoles.includes(req.user.role)) {
+      if (!allowedRoles.includes((req.user as any).role)) {
         throw createHttpError(403, "Access denied. Insufficient permissions.");
       }
 

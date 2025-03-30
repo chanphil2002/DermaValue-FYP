@@ -19,6 +19,10 @@ export const registerUser: RequestHandler = async (req, res, next) => {
       throw createHttpError(409, "User already exists");
     }
 
+    if (!email) {
+      throw new Error("Email is required");
+    }
+
     // **Create User**
     const user = new User({ username, email, password, role });
     await user.save();
@@ -38,7 +42,7 @@ export const registerUser: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const loginUser = (role: UserRole.CLINICIAN | UserRole.PATIENT ): RequestHandler => async (req, res, next) => {
+export const loginUser = (role: UserRole.CLINICIAN | UserRole.PATIENT | UserRole.ADMIN ): RequestHandler => async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -54,7 +58,8 @@ export const loginUser = (role: UserRole.CLINICIAN | UserRole.PATIENT ): Request
 
     // **Clinician Login Requires Approval**
     if (role === UserRole.CLINICIAN) {
-      const clinician = await Clinician.findOne({ user: user._id });
+      const clinician = await Clinician.findOne({ user: user._id }).populate("user");
+      console.log(clinician);
       if (!clinician) throw createHttpError(404, "Clinician profile not found");
       if (!clinician.approved) throw createHttpError(403, "Clinician not approved by admin");
     }
