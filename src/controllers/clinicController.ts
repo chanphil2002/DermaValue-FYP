@@ -1,7 +1,6 @@
 import { RequestHandler } from "express";
 import createHttpError from "http-errors";
-import mongoose from "mongoose";
-import Clinic from "../models/clinic";
+import prisma from "../util/prisma";
 
 // **Create a new clinic**
 export const createClinic: RequestHandler = async (req, res, next) => {
@@ -12,8 +11,9 @@ export const createClinic: RequestHandler = async (req, res, next) => {
       throw createHttpError(400, "Name and location are required");
     }
 
-    const clinic = new Clinic({ name, location });
-    await clinic.save();
+    const clinic = await prisma.clinic.create({
+      data: { name, location },
+    });
 
     res.status(201).json({ message: "Clinic created successfully", clinic });
   } catch (error) {
@@ -25,7 +25,7 @@ export const createClinic: RequestHandler = async (req, res, next) => {
 export const getClinics: RequestHandler = async (req, res, next) => {
   try {
     console.log(req.user);
-    const clinics = await Clinic.find();
+    const clinics = await prisma.clinic.findMany();
     res.status(200).json(clinics);
   } catch (error) {
     next(error);
@@ -37,11 +37,10 @@ export const getClinicById: RequestHandler = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    if (!mongoose.isValidObjectId(id)) {
-      throw createHttpError(400, "Invalid clinic ID");
-    }
+    const clinic = await prisma.clinic.findUnique({
+      where: { id },
+    });
 
-    const clinic = await Clinic.findById(id);
     if (!clinic) {
       throw createHttpError(404, "Clinic not found");
     }
@@ -58,16 +57,17 @@ export const updateClinic: RequestHandler = async (req, res, next) => {
     const { id } = req.params;
     const updateData = req.body;
 
-    if (!mongoose.isValidObjectId(id)) {
-      throw createHttpError(400, "Invalid clinic ID");
-    }
+    const updatedClinic = await prisma.clinic.update({
+      where: { id },
+      data: updateData,
+    });
 
-    const updatedClinic = await Clinic.findByIdAndUpdate(id, updateData, { new: true });
     if (!updatedClinic) {
       throw createHttpError(404, "Clinic not found");
     }
 
     res.status(200).json(updatedClinic);
+
   } catch (error) {
     next(error);
   }
@@ -78,16 +78,12 @@ export const deleteClinic: RequestHandler = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    if (!mongoose.isValidObjectId(id)) {
-      throw createHttpError(400, "Invalid clinic ID");
-    }
-
-    const deletedClinic = await Clinic.findByIdAndDelete(id);
-    if (!deletedClinic) {
-      throw createHttpError(404, "Clinic not found");
-    }
+    await prisma.clinic.delete({
+      where: { id },
+    });
 
     res.status(200).json({ message: "Clinic deleted successfully" });
+    
   } catch (error) {
     next(error);
   }

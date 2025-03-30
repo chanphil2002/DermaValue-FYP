@@ -38,10 +38,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const authController = __importStar(require("../controllers/authController"));
-const userRole_1 = require("../enums/userRole");
 const router = express_1.default.Router();
 router.post("/register", authController.registerUser);
-router.post("/login/clinician", authController.loginUser(userRole_1.UserRole.CLINICIAN));
-router.post("/login/patient", authController.loginUser(userRole_1.UserRole.PATIENT));
 exports.default = router;
 //# sourceMappingURL=authRouter.js.map

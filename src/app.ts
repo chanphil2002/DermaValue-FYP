@@ -8,8 +8,6 @@ import session from "express-session";
 import flash from "connect-flash";
 import methodOverride from "method-override";
 import helmet from "helmet";
-import mongoSanitize from "express-mongo-sanitize";
-import MongoStore from "connect-mongo";
 
 
 // Import Routes
@@ -36,7 +34,6 @@ app.use(express.json());
 app.use(methodOverride("_method"));
 app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "public")));
-app.use(mongoSanitize());
 
 // Router
 app.use("/", authRouter);

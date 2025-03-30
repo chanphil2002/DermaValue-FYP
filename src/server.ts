@@ -1,26 +1,30 @@
 import app from "./app";
 import env from "./util/validateEnv";
-import mongoose from "mongoose";
+import { PrismaClient } from "@prisma/client";
 
+const prisma = new PrismaClient();
 const port = env.PORT;
 
-console.log("Attempting to connect to MongoDB...");
+console.log("Attempting to connect to PostgreSQL via Prisma...");
 
-mongoose.set('debug', true); // Enable mongoose debug mode
-
-mongoose.connect(env.LOCAL_MONGO!, {
-  // tls: true,  // Enable TLS
-  // tlsAllowInvalidCertificates: true, // (Optional) If using self-signed certs
-  // ssl: true,  // Enable SSL
-  serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds instead of hanging indefinitely
-  autoIndex: process.env.NODE_ENV === "development", // Auto create indexes in development
-})
+// ✅ Connect to PostgreSQL via Prisma
+prisma.$connect()
   .then(() => {
-    console.log("[mongo]: Connected to the database");
+    console.log("🟢 [Prisma]: Connected to PostgreSQL");
+
+    // ✅ Start the server only after Prisma connects successfully
     app.listen(port, () => {
-      console.log(`[server]: Server is running at http://localhost:${port}`);
+      console.log(`🚀 [Server]: Running at http://localhost:${port}`);
     });
   })
-  .catch((error) => {
-    console.error("[mongo]: Connection error", error);
+  .catch((error: any) => {
+    console.error("🔴 [Prisma]: Connection error", error);
+    process.exit(1); // Exit process if database connection fails
   });
+
+// ✅ Graceful Shutdown (Disconnect Prisma on Exit)
+process.on("SIGINT", async () => {
+  await prisma.$disconnect();
+  console.log("🔴 [Prisma]: Disconnected");
+  process.exit(0);
+});

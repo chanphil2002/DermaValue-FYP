@@ -8,6 +8,8 @@ const AppointmentSchema = new mongoose_1.Schema({
     clinic: { type: mongoose_1.Schema.Types.ObjectId, ref: "Clinic", default: null },
     date: { type: Date, required: true },
     status: { type: String, enum: Object.values(appointmentStatus_1.AppointmentStatus), default: "pending" },
+    diagnosis: { type: mongoose_1.Schema.Types.ObjectId, ref: "Diagnosis", default: null },
+    prom: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "PromResponse", default: [] }]
 }, { timestamps: true });
 exports.default = (0, mongoose_1.model)("Appointment", AppointmentSchema);
 //# sourceMappingURL=appointment.js.map

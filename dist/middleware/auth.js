@@ -26,8 +26,9 @@ const authorizeRole = (allowedRoles) => {
         try {
             if (!req.user)
                 throw (0, http_errors_1.default)(401, "User not authenticated");
-            if (!allowedRoles.includes(req.user))
+            if (!allowedRoles.includes(req.user.role)) {
                 throw (0, http_errors_1.default)(403, "Access denied. Insufficient permissions.");
+            }
             next();
         }
         catch (error) {

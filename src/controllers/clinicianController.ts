@@ -1,14 +1,18 @@
 import { RequestHandler } from "express";
-import Clinician from "../models/clinician";
 import createHttpError from "http-errors";
-import mongoose from "mongoose";
+import prisma from "../util/prisma";
 
 export const getClinicians: RequestHandler = async (req, res, next) => {
     try {
-        const clinicians = await Clinician.find().exec();
-        // res.status(200).json(clinicians);
+        const clinicians = await prisma.clinician.findMany({
+            include: {
+              user: true, // Include associated user details if needed
+            },
+          });
+
         res.locals.isIndexPage = true;
         res.render('home', { clinicians });
+
     } catch (error) {
         next(error);
     }
@@ -18,12 +22,17 @@ export const getClinician: RequestHandler = async (req, res, next) => {
     const clinicianId = req.params.id;
 
     try {
-        if(!mongoose.isValidObjectId(clinicianId)){ throw createHttpError(400, "Invalid clinician ID"); }
-        const clinician = await Clinician.findById(clinicianId).exec();
+        const clinician = await prisma.clinician.findUnique({
+            where: { id: clinicianId },
+            include: {
+                user: true, // Include associated user details if needed
+            },
+        });
 
         if(!clinician){ throw createHttpError(404, "Clinician not found"); }
 
         res.status(200).json(clinician);
+
     } catch (error) {
         next(error);
     }
@@ -43,9 +52,20 @@ export const createClinician: RequestHandler<unknown, unknown, CreateClinicianBo
     try {
         if (!email) { throw createHttpError(400, "Email is required"); }
 
-        const newClinician = await Clinician.create({ 
-            email: email, 
-            name: name  
+        const newClinician = await prisma.clinician.create({
+            data: {
+                user: {
+                create: {
+                    email,
+                    username: name || email.split("@")[0], // Default username if name is not provided
+                    password: "defaultpassword", // Replace with hashed password if needed
+                    role: "CLINICIAN",
+                },
+                },
+            },
+            include: {
+                user: true, // Include associated user details
+            },
         });
         
         res.status(201).json({ message: "Clinician created successfully", newClinician });
@@ -61,39 +81,38 @@ interface UpdateClinicianBody {
     name?: string;
 }
 
-// export const updateClinician: RequestHandler<UpdateClinicianParams, unknown, UpdateClinicianBody, unknown> = async (req, res, next) => {
-//     const clinicianId = req.params.id;
-//     console.log("clinicianID" + clinicianId);
-//     const newEmail = req.body.email;
-//     const newName = req.body.name;
+export const updateClinician: RequestHandler<UpdateClinicianParams, unknown, UpdateClinicianBody, unknown> = async (req, res, next) => {
+    const clinicianId = req.params.id;
+    const { email, name } = req.body;
 
-//     try {
-//         if(!mongoose.isValidObjectId(clinicianId)){ throw createHttpError(400, "Invalid clinician ID"); }
+    try {
+        const updatedClinician = await prisma.clinician.update({
+            where: { id: clinicianId },
+            data: {
+              user: {
+                update: {
+                  email,
+                  username: name,
+                },
+              },
+            },
+            include: {
+              user: true, // Include associated user details
+            },
+          });
 
-//         if(!newEmail){ throw createHttpError(400, "Email is required"); }
+        res.status(200).json(updatedClinician);
 
-//         const clinician = await Clinician.findById(clinicianId).exec();
-
-//         if(!clinician){ throw createHttpError(404, "Clinician not found"); }
-
-//         clinician.email = newEmail;
-
-//         const updatedClinician = await clinician.save();
-
-//         res.status(200).json(updatedClinician);
-
-//     } catch (error) { next(error);}
-// };
+    } catch (error) { next(error);}
+};
 
 export const deleteClinician: RequestHandler = async (req, res, next) => {
     const clinicianId = req.params.id;
 
     try {
-        if(!mongoose.isValidObjectId(clinicianId)){ throw createHttpError(400, "Invalid clinician ID"); }
-
-        const clinician = await Clinician.findByIdAndDelete(clinicianId).exec();
-
-        if(!clinician){ throw createHttpError(404, "Clinician not found"); }
+        await prisma.clinician.delete({
+            where: { id: clinicianId },
+          });
 
         res.sendStatus(204);
 

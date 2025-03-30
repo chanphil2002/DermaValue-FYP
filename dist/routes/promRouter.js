@@ -37,12 +37,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const NotesController = __importStar(require("../controllers/notes"));
+const promController = __importStar(require("../controllers/promController"));
+const auth_1 = require("../middleware/auth");
+const userRole_1 = require("../enums/userRole");
 const router = express_1.default.Router();
-router.get("/", NotesController.getNotes);
-router.get("/:id", NotesController.getNote);
-router.post("/", NotesController.createNote);
-router.patch("/:id", NotesController.updateNote);
-router.delete("/:id", NotesController.deleteNote);
+router.post("/addDisease", auth_1.authenticateJWT, (0, auth_1.authorizeRole)([userRole_1.UserRole.ADMIN]), promController.addDisease);
+router.post("/addPROM", auth_1.authenticateJWT, (0, auth_1.authorizeRole)([userRole_1.UserRole.ADMIN]), promController.createProm);
+router.post("/fillProm/:appointmentId", auth_1.authenticateJWT, (0, auth_1.authorizeRole)([userRole_1.UserRole.PATIENT]), promController.fillProm);
 exports.default = router;
-//# sourceMappingURL=notes.js.map
+//# sourceMappingURL=promRouter.js.map

@@ -1,1 +1,1 @@
-{"version":3,"file":"appointmentStatus.js","sourceRoot":"","sources":["../../src/enums/appointmentStatus.ts"],"names":[],"mappings":";;;AAAA,IAAY,iBAIT;AAJH,WAAY,iBAAiB;IACzB,wCAAmB,CAAA;IACnB,0CAAqB,CAAA;IACrB,0CAAqB,CAAA;AACvB,CAAC,EAJS,iBAAiB,iCAAjB,iBAAiB,QAI1B"}
+{"version":3,"file":"appointmentStatus.js","sourceRoot":"","sources":["../../src/enums/appointmentStatus.ts"],"names":[],"mappings":";;;AAAA,IAAY,iBAKT;AALH,WAAY,iBAAiB;IACzB,wCAAmB,CAAA;IACnB,0CAAqB,CAAA;IACrB,0CAAqB,CAAA;IACrB,4CAAuB,CAAA;AACzB,CAAC,EALS,iBAAiB,iCAAjB,iBAAiB,QAK1B"}

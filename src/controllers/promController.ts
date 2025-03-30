@@ -1,11 +1,9 @@
 import { RequestHandler } from "express";
 import createHttpError from "http-errors";
-import Appointment from "../models/appointment";
-import Prom from "../models/prom";
-import PromResponse from "../models/promResponse";
-import Disease from "../models/disease";
+import prisma from "../util/prisma";
+import { $Enums } from "@prisma/client";
 import { assertHasUser } from "../util/assertHasUser";
-import { AppointmentStatus } from "../enums/appointmentStatus";
+import { Question, PromTemplate } from "../@types/types";
 
 export const addDisease: RequestHandler = async (req, res, next) => {
     try {
@@ -19,14 +17,18 @@ export const addDisease: RequestHandler = async (req, res, next) => {
         }
 
         // Check if the disease already exists
-        const existingDisease = await Disease.findOne({ name });
+        const existingDisease = await prisma.disease.findUnique({
+            where: { name },
+        });
+
         if (existingDisease) {
-        throw createHttpError(409, "Disease already exists.");
+            throw createHttpError(409, "Disease already exists.");
         }
 
         // Save new disease
-        const newDisease = new Disease({ name });
-        await newDisease.save();
+        const newDisease = await prisma.disease.create({
+            data: { name },
+        });
 
         res.status(201).json({ message: "Disease added successfully", disease: newDisease });
     } catch (error) {
@@ -50,13 +52,15 @@ export const createProm: RequestHandler = async (req, res, next) => {
         throw createHttpError(400, "All fields (name, diseaseId, questions) are required.");
     }
 
-    const promTemplate = new Prom({
-        name, // Save the PROM name
-        disease: diseaseId,
-        questions,
+    // Create PROM template
+    const promTemplate = await prisma.prom.create({
+        data: {
+          name,
+          diseaseId,
+          questions
+        },
       });
 
-    await promTemplate.save();
 
     res.status(201).json({message: "PROM Template created successfully", promTemplate});
 
@@ -70,7 +74,13 @@ export const fillProm: RequestHandler = async (req, res, next) => {
     try {
         assertHasUser(req);
 
-        const loggedInUserId = req.user.userId;
+        const loggedInUserId = req.user.patientId;
+
+        console.log(loggedInUserId);
+
+        if (!loggedInUserId) {
+            throw createHttpError(401, "User ID is missing or undefined.");
+        }
         const { appointmentId } = req.params;
         const { responses } = req.body;
 
@@ -79,27 +89,30 @@ export const fillProm: RequestHandler = async (req, res, next) => {
         }
 
         // Check if appointment exists
-        const appointment = await Appointment.findById(appointmentId)
-            .populate({
-                path: "diagnosis", // Populate the `diagnosis` field
-                populate: {
-                    path: "disease", // Populate the `disease` field inside `diagnosis`
-                    model: "Disease", // Specify the model for the `disease` field
+        const appointment = await prisma.appointment.findUnique({
+            where: { id: appointmentId },
+            include: {
+            diagnosis: {
+                include: {
+                disease: true,
                 },
-            })
-        .exec();
+            },
+            patient: true,
+            clinician: true,
+            },
+        });
 
         if (!appointment) {
             throw createHttpError(404, "Appointment not found");
         }
 
         // Ensure the current user is the patient of this appointment
-        if (appointment.patient.toString() !== loggedInUserId.toString()) {
+        if (appointment.patientId !== loggedInUserId.toString()) {
             throw createHttpError(403, "You are not authorized to fill this PROM");
         }
 
         // Ensure appointment status is "done"
-        if (appointment.status !== AppointmentStatus.COMPLETED) {
+        if (appointment.status !== $Enums.AppointmentStatus.COMPLETED) {
             throw createHttpError(400, "You can only fill PROM after treatment is completed");
         }
         
@@ -112,22 +125,28 @@ export const fillProm: RequestHandler = async (req, res, next) => {
         const twoWeeksAgo = new Date();
         twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
-        const recentProm = await PromResponse.findOne({
-            appointment: appointmentId,
-            patient: loggedInUserId,
-            submittedAt: { $gte: twoWeeksAgo }, // Check if a PROM was submitted within the last two weeks
-        });
+        const recentProm = await prisma.promResponse.findFirst({
+            where: {
+              appointmentId,
+              patientId: loggedInUserId,
+              submittedAt: {
+                gte: twoWeeksAgo,
+              },
+            },
+          });
 
         if (recentProm) {
             throw createHttpError(400, "You can only fill PROM every two weeks");
         }
         
         const diagnosis = appointment.diagnosis as unknown as {
-        disease: { _id: string; name: string }; // Replace with the actual structure of your Disease model
+            disease: { _id: string; name: string }; // Replace with the actual structure of your Disease model
         };
 
-        // Validate that all responses match the PROM questions
-        const promTemplate = await Prom.findOne({ disease: diagnosis.disease });
+        // Fetch the PROM template using diseaseId
+        const promTemplate = await prisma.prom.findFirst({
+            where: { diseaseId: appointment.diagnosis?.disease.id },
+        }) as PromTemplate;
 
         if (!promTemplate) {
             throw createHttpError(404, "No PROM template found for this disease");
@@ -141,16 +160,7 @@ export const fillProm: RequestHandler = async (req, res, next) => {
         let totalScore = 0;
 
         // Map responses to questions
-        interface Response {
-            score: number;
-        }
-
-        interface ValidatedResponse {
-            question: string;
-            score: number;
-        }
-
-        const validatedResponses: ValidatedResponse[] = responses.map((response: Response, index: number) => {
+        const validatedResponses = responses.map((response: { score: number }, index: number) => {
             if (!promTemplate.questions[index]) {
                 throw createHttpError(400, "Invalid question response");
             }
@@ -162,20 +172,16 @@ export const fillProm: RequestHandler = async (req, res, next) => {
         });
 
         // Save the PROM response
-        const promResponse = new PromResponse({
-            appointment: appointment._id,
-            patient: loggedInUserId,
-            clinician: appointment.clinician._id,
-            prom: promTemplate._id,
+        const promResponse = await prisma.promResponse.create({
+            data: {
+            appointmentId: appointment.id,
+            patientId: loggedInUserId,
+            clinicianId: appointment.clinicianId,
+            promId: promTemplate.id,
             responses: validatedResponses,
             totalScore,
+            },
         });
-
-        await promResponse.save();
-
-        // Add the PROM response to the appointment's PROM array
-        appointment.prom.push(promResponse._id);
-        await appointment.save();
   
       res.status(201).json({ message: "PROM submitted successfully", promResponse});
       

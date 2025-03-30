@@ -1,12 +1,14 @@
 import { RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 import createHttpError from "http-errors";
-import { UserRole } from "../enums/userRole";
+import { $Enums } from "@prisma/client";
 
 // Explicitly define a custom user type
 interface AuthenticatedUser {
   userId: string;
-  role: UserRole;
+  patientId?: string;
+  clinicianId?: string;
+  role: $Enums.UserRole;
 }
 
 // Middleware to verify JWT and extract user data
@@ -26,12 +28,14 @@ export const authenticateJWT: RequestHandler = (req, res, next) => {
 };
 
 // Middleware to check user role
-export const authorizeRole = (allowedRoles: UserRole[]): RequestHandler => {
+export const authorizeRole = (allowedRoles: $Enums.UserRole[]): RequestHandler => {
   return (req, res, next) => {
     try {
       if (!req.user) throw createHttpError(401, "User not authenticated");
 
-      if (!allowedRoles.includes((req.user as any).role)) {
+      const userRole = (req.user as { role: $Enums.UserRole }).role;
+
+      if (!allowedRoles.includes(userRole)) {
         throw createHttpError(403, "Access denied. Insufficient permissions.");
       }
 

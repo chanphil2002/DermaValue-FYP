@@ -12,65 +12,55 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.loginUser = exports.registerUser = void 0;
+exports.registerUser = void 0;
 const http_errors_1 = __importDefault(require("http-errors"));
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const user_1 = __importDefault(require("../models/user"));
-const clinician_1 = __importDefault(require("../models/clinician"));
-const patient_1 = __importDefault(require("../models/patient"));
+const client_1 = require("@prisma/client");
 const userRole_1 = require("../enums/userRole");
+const prisma = new client_1.PrismaClient();
 const registerUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { username, email, password, role, clinic, services, medicalHistory } = req.body;
         if (!username || !email || !password || !role) {
             throw (0, http_errors_1.default)(400, "All fields are required");
         }
-        const existingUser = yield user_1.default.findOne({ email });
+        const existingUser = yield prisma.user.findUnique({ where: { email } });
         if (existingUser) {
             throw (0, http_errors_1.default)(409, "User already exists");
         }
-        const user = new user_1.default({ username, email, password, role });
-        yield user.save();
-        if (role === userRole_1.UserRole.CLINICIAN) {
-            const clinician = new clinician_1.default({ user: user._id, clinic, services, approved: false });
-            yield clinician.save();
+        if (!email) {
+            throw new Error("Email is required");
         }
-        else if (role === userRole_1.UserRole.PATIENT) {
-            const patient = new patient_1.default({ user: user._id, medicalHistory });
-            yield patient.save();
-        }
-        res.status(201).json({ message: "User registered successfully", userId: user._id });
+        const result = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
+            const user = yield tx.user.create({
+                data: { username, email, password, role },
+            });
+            if (role === userRole_1.UserRole.CLINICIAN) {
+                yield tx.clinician.create({
+                    data: {
+                        userId: user.id,
+                        clinicId: clinic || null,
+                        services: {
+                            connect: (services === null || services === void 0 ? void 0 : services.map((id) => ({ id }))) || [],
+                        },
+                        approved: false,
+                    },
+                });
+            }
+            else if (role === userRole_1.UserRole.PATIENT) {
+                yield tx.patient.create({
+                    data: {
+                        userId: user.id,
+                        medicalHistory: medicalHistory || "",
+                    },
+                });
+            }
+            return user;
+        }));
+        res.status(201).json({ message: "User registered successfully", userId: result.id });
     }
     catch (error) {
         next(error);
     }
 });
 exports.registerUser = registerUser;
-const loginUser = (role) => (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { email, password } = req.body;
-        if (!email || !password || !role) {
-            throw (0, http_errors_1.default)(400, "Email and password are required");
-        }
-        const user = yield user_1.default.findOne({ email });
-        if (!user || user.role !== role)
-            throw (0, http_errors_1.default)(401, "Invalid credentials");
-        const isMatch = yield user.comparePassword(password);
-        if (!isMatch)
-            throw (0, http_errors_1.default)(401, "Invalid credentials");
-        if (role === userRole_1.UserRole.CLINICIAN) {
-            const clinician = yield clinician_1.default.findOne({ user: user._id });
-            if (!clinician)
-                throw (0, http_errors_1.default)(404, "Clinician profile not found");
-            if (!clinician.approved)
-                throw (0, http_errors_1.default)(403, "Clinician not approved by admin");
-        }
-        const token = jsonwebtoken_1.default.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
-        res.status(200).json({ message: "Login successful", token });
-    }
-    catch (error) {
-        next(error);
-    }
-});
-exports.loginUser = loginUser;
 //# sourceMappingURL=authController.js.map

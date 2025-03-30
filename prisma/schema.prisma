@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String
+  email     String   @unique
+  password  String
+  role      UserRole
+
+  clinician   Clinician? @relation
+  clinicianId String?  // Foreign key to Clinician
+
+  patient   Patient?
+  patientId String?    // Foreign key to Patient
+
+  admin     Admin?     @relation
+  adminId   String?   // Foreign key to Admin
+}
+
+model Admin {
+  id   String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique
+}
+
+model Clinician {
+  id       String   @id @default(uuid())
+  user     User     @relation(fields: [userId], references: [id])
+  userId   String  @unique // Foreign key to User
+  clinic   Clinic?  @relation(fields: [clinicId], references: [id])
+  clinicId String?
+  services Service[]
+  approved Boolean  @default(false)
+
+  appointments Appointment[]
+
+  Diagnosis Diagnosis[]
+
+  PromResponse PromResponse[]
+}
+
+model Patient {
+  id             String   @id @default(uuid())
+  user           User     @relation(fields: [userId], references: [id])
+  userId   String  @unique
+  medicalHistory String?
+  appointments   Appointment[]
+
+  PromResponse PromResponse[]
+}
+
+model Clinic {
+  id       String @id @default(uuid())
+  name     String
+  location String
+  clinicians Clinician[]
+
+  Appointment Appointment[]
+}
+
+model Appointment {
+  id         String     @id @default(uuid())
+  patient    Patient    @relation(fields: [patientId], references: [id])
+  patientId  String
+  clinician  Clinician  @relation(fields: [clinicianId], references: [id])
+  clinicianId String
+  clinic     Clinic?    @relation(fields: [clinicId], references: [id])
+  clinicId   String?
+  date       DateTime
+  status     AppointmentStatus @default(PENDING)
+  diagnosis  Diagnosis?
+  promResponses PromResponse[]
+}
+
+model Diagnosis {
+  id           String     @id @default(uuid())
+  appointment  Appointment @relation(fields: [appointmentId], references: [id])
+  appointmentId String   @unique
+  clinician    Clinician  @relation(fields: [clinicianId], references: [id])
+  clinicianId  String
+  disease      Disease    @relation(fields: [diseaseId], references: [id])
+  diseaseId    String
+  description  String
+  treatmentPlan String
+}
+
+model Disease {
+  id   String @id @default(uuid())
+  name String @unique
+  prom Prom[]
+
+  Diagnosis Diagnosis[]
+}
+
+model Prom {
+  id        String @id @default(uuid())
+  disease   Disease @relation(fields: [diseaseId], references: [id])
+  diseaseId String
+  name      String
+  questions Json
+  promResponses PromResponse[]
+}
+
+model PromResponse {
+  id          String     @id @default(uuid())
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+  appointmentId String
+  patient     Patient    @relation(fields: [patientId], references: [id])
+  patientId   String
+  clinician   Clinician  @relation(fields: [clinicianId], references: [id])
+  clinicianId String
+  prom       Prom      @relation(fields: [promId], references: [id])
+  promId     String
+  responses   Json
+  totalScore  Int      @default(0)
+  submittedAt DateTime @default(now())
+}
+
+model Service {
+  id   String @id @default(uuid())
+  name String
+  clinicians Clinician[]
+}
+
+enum UserRole {
+  ADMIN
+  CLINICIAN
+  PATIENT
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}

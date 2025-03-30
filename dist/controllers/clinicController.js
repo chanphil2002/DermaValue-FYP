@@ -18,6 +18,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const clinic_1 = __importDefault(require("../models/clinic"));
 const createClinic = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log(req.user);
         const { name, location } = req.body;
         if (!name || !location) {
             throw (0, http_errors_1.default)(400, "Name and location are required");
@@ -31,8 +32,9 @@ const createClinic = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.createClinic = createClinic;
-const getClinics = (_req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const getClinics = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log(req.user);
         const clinics = yield clinic_1.default.find();
         res.status(200).json(clinics);
     }

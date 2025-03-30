@@ -1,10 +1,12 @@
 import { Request } from "express";
-import { UserRole } from "../enums/userRole";
+import { $Enums } from "@prisma/client";
 
 type RequestWithUser = Request & {
   user: {
     userId: string;
-    role: UserRole;
+    role: $Enums.UserRole;
+    patientId?: string; // Optional field for patient ID
+    clinicianId?: string; // Optional field for clinician ID
   };
 };
 

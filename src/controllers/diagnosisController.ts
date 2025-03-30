@@ -1,8 +1,7 @@
 import { RequestHandler } from "express";
 import createHttpError from "http-errors";
-import Diagnosis from "../models/diagnosis";
-import Disease from "../models/disease";
-import Appointment from "../models/appointment";
+import prisma from "../util/prisma";
+import { $Enums } from "@prisma/client";
 import { assertHasUser } from "../util/assertHasUser";
 
 // Add Diagnosis to Appointment
@@ -20,44 +19,64 @@ export const addDiagnosis: RequestHandler = async (req, res, next) => {
     }
 
     // Find the appointment
-    const appointment = await Appointment.findById(id)
-      .populate("clinician")
-      .exec();
+    const appointment = await prisma.appointment.findUnique({
+      where: { id },
+      include: {
+        clinician: {
+          include: {
+            user: true, // Include associated user details
+          },
+        },
+      },
+    });
 
     if (!appointment) {
       throw createHttpError(404, "Appointment not found");
     }
 
     // Check if the clinician is authorized to add the diagnosis
-    if (appointment.clinician.user._id.toString() !== loggedInUserId.toString()) {
+    if (appointment.clinician?.user?.id.toString() !== loggedInUserId.toString()) {
       throw createHttpError(403, "You are not authorized to add diagnosis for this appointment");
     }
 
     // Check if a diagnosis already exists for this appointment
-    const existingDiagnosis = await Diagnosis.findOne({ appointment: id });
+    const existingDiagnosis = await prisma.diagnosis.findUnique({
+      where: { appointmentId: id },
+    });
+
     if (existingDiagnosis) {
       throw createHttpError(409, "Diagnosis already exists for this appointment");
     }
 
     // Validate if disease exists in the database
-    const diseaseExists = await Disease.findById(disease);
+    const diseaseExists = await prisma.disease.findUnique({
+      where: { id: disease },
+    });
+
     if (!diseaseExists) {
       throw createHttpError(404, "Specified disease not found");
     }
 
     // Create the diagnosis record
-    const diagnosisRecord = new Diagnosis({
-      appointment: appointment._id,
-      clinician: appointment.clinician._id,
-      disease,
-      description,
-      treatmentPlan,
+    const diagnosisRecord = await prisma.diagnosis.create({
+      data: {
+        appointmentId: appointment.id,
+        clinicianId: appointment.clinician.id,
+        diseaseId: disease,
+        description,
+        treatmentPlan,
+      },
     });
-    
-    await diagnosisRecord.save();
 
-    appointment.diagnosis = diagnosisRecord._id;
-    await appointment.save();
+    // Update the appointment with the diagnosis ID
+    await prisma.appointment.update({
+      where: { id },
+      data: {
+        diagnosis: {
+          connect: { id: diagnosisRecord.id }, // Connect the diagnosis by its ID
+        },
+      },
+    });
 
     res.status(201).json({ message: "Diagnosis added successfully", diagnosis: diagnosisRecord });
   } catch (error) {
@@ -69,7 +88,16 @@ export const getDiagnosisByAppointment: RequestHandler = async (req, res, next) 
     try {
       const { appointmentId } = req.params;
   
-      const diagnosis = await Diagnosis.findOne({ appointment: appointmentId }).populate("clinician");
+      const diagnosis = await prisma.diagnosis.findUnique({
+        where: { appointmentId },
+        include: {
+          clinician: {
+            include: {
+              user: true, // Include associated user details
+            },
+          },
+        },
+      });
   
       if (!diagnosis) {
         throw createHttpError(404, "No diagnosis found for this appointment");
@@ -86,9 +114,16 @@ export const getDiagnosisByAppointment: RequestHandler = async (req, res, next) 
     try {
     assertHasUser(req);
       const { diagnosisId } = req.params;
-      const { diagnosis, treatmentPlan } = req.body;
+      const { diagnosis, treatmentPlan, disease } = req.body;
   
-      const existingDiagnosis = await Diagnosis.findById(diagnosisId).populate("disease");
+      // Find the existing diagnosis
+      const existingDiagnosis = await prisma.diagnosis.findUnique({
+        where: { id: diagnosisId },
+        include: {
+          clinician: true,
+        },
+      });
+
       if (!existingDiagnosis) {
         throw createHttpError(404, "Diagnosis not found");
       }
@@ -98,10 +133,14 @@ export const getDiagnosisByAppointment: RequestHandler = async (req, res, next) 
         throw createHttpError(403, "You are not authorized to update this diagnosis");
       }
   
-      existingDiagnosis.disease = diagnosis || existingDiagnosis.disease;
-      existingDiagnosis.treatmentPlan = treatmentPlan || existingDiagnosis.treatmentPlan;
-  
-      await existingDiagnosis.save();
+      // Update the diagnosis
+      const updatedDiagnosis = await prisma.diagnosis.update({
+        where: { id: diagnosisId },
+        data: {
+          diseaseId: disease || existingDiagnosis.diseaseId,
+          treatmentPlan: treatmentPlan || existingDiagnosis.treatmentPlan,
+        },
+      });
   
       res.status(200).json({ message: "Diagnosis updated successfully", diagnosis: existingDiagnosis });
     } catch (error) {

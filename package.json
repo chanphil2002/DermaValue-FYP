@@ -4,13 +4,14 @@
   "description": "fyp node-modules",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "nodemon -r tsconfig-paths/register src/server.ts",
+    "dev": "nodemon -r tsconfig-paths/register ./src/server.ts",
     "build": "tsc && node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^6.5.0",
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/passport": "^1.0.17",
@@ -53,6 +54,7 @@
     "express": "^4.21.2",
     "globals": "^15.14.0",
     "nodemon": "^3.1.9",
+    "prisma": "^6.5.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.23.0"

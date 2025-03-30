@@ -6,5 +6,6 @@ var AppointmentStatus;
     AppointmentStatus["PENDING"] = "pending";
     AppointmentStatus["APPROVED"] = "approved";
     AppointmentStatus["REJECTED"] = "rejected";
+    AppointmentStatus["COMPLETED"] = "completed";
 })(AppointmentStatus || (exports.AppointmentStatus = AppointmentStatus = {}));
 //# sourceMappingURL=appointmentStatus.js.map

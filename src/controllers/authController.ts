@@ -1,10 +1,11 @@
 import { RequestHandler } from "express";
 import createHttpError from "http-errors";
 import jwt from "jsonwebtoken";
-import User from "../models/user";
-import Clinician from "../models/clinician";
-import Patient from "../models/patient";
-import { UserRole } from "../enums/userRole";
+import prisma from "../util/prisma";
+import { $Enums } from "@prisma/client";
+import bcrypt from "bcrypt";
+
+type UserRole = (typeof $Enums.UserRole)[keyof typeof $Enums.UserRole];
 
 export const registerUser: RequestHandler = async (req, res, next) => {
   try {
@@ -14,7 +15,8 @@ export const registerUser: RequestHandler = async (req, res, next) => {
       throw createHttpError(400, "All fields are required");
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+
     if (existingUser) {
       throw createHttpError(409, "User already exists");
     }
@@ -23,26 +25,46 @@ export const registerUser: RequestHandler = async (req, res, next) => {
       throw new Error("Email is required");
     }
 
-    // **Create User**
-    const user = new User({ username, email, password, role });
-    await user.save();
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // **Create Profile Based on Role**
-    if (role === UserRole.CLINICIAN) {
-      const clinician = new Clinician({ user: user._id, clinic, services, approved: false });
-      await clinician.save();
-    } else if (role === UserRole.PATIENT) {
-      const patient = new Patient({ user: user._id, medicalHistory });
-      await patient.save();
-    }
+    // **Create User and Profile in a Transaction**
+    const result = await prisma.$transaction(async (tx) => {
+      // **Create User**
+      const user = await tx.user.create({
+        data: { username, email, password: hashedPassword, role },
+      });
 
-    res.status(201).json({ message: "User registered successfully", userId: user._id });
+      // **Create Profile Based on Role**
+      if (role === $Enums.UserRole.CLINICIAN) {
+        await tx.clinician.create({
+          data: {
+            userId: user.id,
+            clinicId: clinic || null, // Allow null clinic
+            services: {
+              connect: services?.map((id: string) => ({ id })) || [],
+            },
+            approved: false,
+          },
+        });
+      } else if (role === $Enums.UserRole.PATIENT) {
+        await tx.patient.create({
+          data: {
+            userId: user.id,
+            medicalHistory: medicalHistory || "",
+          },
+        });
+      }
+
+      return user;
+    });
+
+    res.status(201).json({ message: "User registered successfully", userId: result.id });
   } catch (error) {
     next(error);
   }
 };
 
-export const loginUser = (role: UserRole.CLINICIAN | UserRole.PATIENT | UserRole.ADMIN ): RequestHandler => async (req, res, next) => {
+export const loginUser = (role: UserRole): RequestHandler => async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -50,21 +72,44 @@ export const loginUser = (role: UserRole.CLINICIAN | UserRole.PATIENT | UserRole
       throw createHttpError(400, "Email and password are required");
     }
 
-    const user = await User.findOne({ email });
+    // Fetch the user and include role-specific data
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        clinician: role === $Enums.UserRole.CLINICIAN, // Include clinician data if role is CLINICIAN
+        patient: role === $Enums.UserRole.PATIENT,    // Include patient data if role is PATIENT
+      },
+    });
+
     if (!user || user.role !== role) throw createHttpError(401, "Invalid credentials");
 
-    const isMatch = await user.comparePassword(password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw createHttpError(401, "Invalid credentials");
 
     // **Clinician Login Requires Approval**
-    if (role === UserRole.CLINICIAN) {
-      const clinician = await Clinician.findOne({ user: user._id }).populate("user");
+    if (role === $Enums.UserRole.CLINICIAN) {
+      const clinician = await prisma.clinician.findUnique({
+        where: { userId: user.id },
+      });
+
       console.log(clinician);
       if (!clinician) throw createHttpError(404, "Clinician profile not found");
       if (!clinician.approved) throw createHttpError(403, "Clinician not approved by admin");
     }
 
-    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET!, { expiresIn: "1h" });
+    // Construct the JWT payload dynamically based on the role
+    const payload: Record<string, any> = {
+      userId: user.id,
+      role: user.role,
+    };
+
+    if (role === $Enums.UserRole.CLINICIAN) {
+      payload.clinicianId = user.clinician?.id; // Add clinician-specific data
+    } else if (role === $Enums.UserRole.PATIENT) {
+      payload.patientId = user.patient?.id; // Add patient-specific data
+    }
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "1h" });
 
     res.status(200).json({ message: "Login successful", token });
   } catch (error) {
