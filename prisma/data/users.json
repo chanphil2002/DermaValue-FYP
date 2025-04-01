@@ -1,0 +1,44 @@
+[
+    {
+        "username": "John",
+        "email": "john@example.com",
+        "password": "$2a$10$9KGrPBlJWjfFTzHpEn63KehTw91qNleWbO6qpHHmuXbOsKxRn3tmm",
+        "role": "PATIENT"
+    },
+    {
+        "username": "david_wilson",
+        "email": "david.wilson@example.com",
+        "password": "$2a$10$9KGrPBlJWjfFTzHpEn63KehTw91qNleWbO6qpHHmuXbOsKxRn3tmm",
+        "role": "PATIENT"
+    },
+    {
+        "username": "sarah_miller",
+        "email": "sarah.miller@example.com",
+        "password": "$2a$10$9KGrPBlJWjfFTzHpEn63KehTw91qNleWbO6qpHHmuXbOsKxRn3tmm",
+        "role": "PATIENT"
+    },
+    {
+        "username": "Barbara",
+        "email": "barbara@gmail.com",
+        "password": "$2a$10$3f0A5IHwX/CSeCi1g6b7jOgs4rO6Sm1/7vNImMpQq10wBvIEq5vIK",
+        "role": "CLINICIAN"
+    },
+    {
+        "username": "John",
+        "email": "murphynetflix@gmail.com",
+        "password": "$2a$10$3f0A5IHwX/CSeCi1g6b7jOgs4rO6Sm1/7vNImMpQq10wBvIEq5vIK",
+        "role": "CLINICIAN"
+    },
+    {
+        "username": "Charlie",
+        "email": "charlie@gmail.com",
+        "password": "$2a$10$9KGrPBlJWjfFTzHpEn63KehTw91qNleWbO6qpHHmuXbOsKxRn3tmm",
+        "role": "CLINICIAN"
+    },
+    {
+        "username": "admin",
+        "email": "admin@gmail.com",
+        "password": "$2a$10$Bs384usWGSoRPBKkvlimtOJF72CwY0F.CrAPC3rR2ZeV9Cyl6oiku",
+        "role": "ADMIN"
+    }
+]

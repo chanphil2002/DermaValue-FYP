@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "fyp node-modules",
   "main": "dist/index.js",
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "scripts": {
     "dev": "nodemon -r tsconfig-paths/register ./src/server.ts",
     "build": "tsc && node dist/server.js",
@@ -34,6 +37,7 @@
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "path": "^0.12.7",
+    "prisma-markdown": "^1.0.9",
     "tsconfig-paths": "^4.2.0"
   },
   "devDependencies": {

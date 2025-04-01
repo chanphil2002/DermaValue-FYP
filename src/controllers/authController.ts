@@ -40,9 +40,6 @@ export const registerUser: RequestHandler = async (req, res, next) => {
           data: {
             userId: user.id,
             clinicId: clinic || null, // Allow null clinic
-            services: {
-              connect: services?.map((id: string) => ({ id })) || [],
-            },
             approved: false,
           },
         });

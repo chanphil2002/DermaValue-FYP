@@ -9,7 +9,7 @@ router.post("/addDisease", authenticateJWT, authorizeRole([$Enums.UserRole.ADMIN
 
 router.post("/addPROM", authenticateJWT, authorizeRole([$Enums.UserRole.ADMIN]), promController.createProm);
 
-router.post("/fillProm/:appointmentId", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT]), promController.fillProm);
+router.post("/fillProm/:caseId", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT]), promController.fillProm);
 
 export default router;
 
