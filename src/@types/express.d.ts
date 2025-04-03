@@ -1,15 +1,9 @@
-import { UserRole } from "../enums/userRole";
+import { User } from '@prisma/client'; // Import Prisma User type
 
-console.log("Custom Express types loaded!");
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        userId: string;
-        role: UserRole;
-      };
+      user?: User | null;  // 'user' is the Prisma User model (or null if not authenticated)
     }
   }
 }
-
-export {};

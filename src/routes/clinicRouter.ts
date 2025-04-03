@@ -8,10 +8,11 @@ router.post("/", clinicController.createClinic);
 
 router.get("/", clinicController.getClinics);
 
-router.get("/:id", clinicController.getClinicById);
+router.get("/index", clinicController.showIndexPage);
 
-router.patch("/:id", clinicController.updateClinic);
-
-router.delete("/:id", clinicController.deleteClinic);
+router.route("/:id")
+    .get(clinicController.getClinicById)
+    .patch(clinicController.updateClinic)
+    .delete(clinicController.deleteClinic);
 
 export default router;

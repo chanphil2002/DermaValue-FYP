@@ -1,23 +1,18 @@
 import { RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 import createHttpError from "http-errors";
-import { $Enums } from "@prisma/client";
-
-// Explicitly define a custom user type
-interface AuthenticatedUser {
-  userId: string;
-  patientId?: string;
-  clinicianId?: string;
-  role: $Enums.UserRole;
-}
+import { User, $Enums } from "@prisma/client";
+import { assertHasUser } from "../util/assertHasUser";
 
 // Middleware to verify JWT and extract user data
 export const authenticateJWT: RequestHandler = (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) throw createHttpError(401, "Access denied. No token provided.");
+    // const token = req.headers.authorization?.split(" ")[1];
+    const token = req.cookies.token;
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as AuthenticatedUser;
+    if (!token) return res.status(401).redirect("/login/patient");
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
 
     req.user = decoded;
 
@@ -44,4 +39,15 @@ export const authorizeRole = (allowedRoles: $Enums.UserRole[]): RequestHandler =
       next(error);
     }
   };
+};
+
+export const clearAuthCookie: RequestHandler = (req, res, next) => {
+  if (req.cookies.token) {
+    // Clear the authentication token cookie if it's set
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",  // Set to true if using HTTPS
+    });
+  }
+  next();
 };

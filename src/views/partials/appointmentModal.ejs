@@ -1,0 +1,38 @@
+<!-- appointmentModal.ejs -->
+<!-- Modal -->
+<div class="modal fade" id="appointmentModal" tabindex="-1" aria-labelledby="appointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="appointmentModalLabel">Book Appointment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Appointment Form -->
+          <form action="/appointments" method="POST">
+            <div class="mb-3">
+              <label for="appointmentDate" class="form-label">Appointment Date</label>
+              <input type="datetime-local" class="form-control" id="appointmentDate" name="appointmentDate" required>
+            </div>
+            <div class="mb-3">
+              <label for="clinician" class="form-label">Select Clinician</label>
+              <select class="form-select" id="clinician" name="clinicianId" required>
+                <option value="" selected disabled>Select a clinician</option>
+                <!-- Dynamically populated clinicians -->
+                <option value="1">Clinician 1</option>
+                <option value="2">Clinician 2</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="appointmentReason" class="form-label">Reason for Appointment</label>
+              <textarea class="form-control" id="appointmentReason" name="appointmentReason" rows="3" required></textarea>
+            </div>
+            <div class="d-flex justify-content-end">
+              <button type="submit" class="btn btn-primary">Book Appointment</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  

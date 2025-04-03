@@ -8,3 +8,8 @@ export type PromTemplate = {
     diseaseId: string;
     questions: Question[];
 };
+
+export type QuestionResponse = {
+    score: string; // Assuming score is a string in the request body
+    text: string;  // The question text
+}

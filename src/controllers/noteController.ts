@@ -3,22 +3,58 @@ import createHttpError from "http-errors";
 import prisma from "../util/prisma";
 import { assertHasUser } from "../util/assertHasUser";
 
-// Add a note to a case
-export const addCaseNote: RequestHandler = async (req, res, next) => {
+export const readMDTNote: RequestHandler = async (req, res, next) => {
   try {
     assertHasUser(req);
+    const caseId = req.params.id; // Get the case ID from the URL parameter
+    const user = req.user; // Ensure user is authenticated
+
+    // Ensure user is a clinician
+    if (user.role !== "CLINICIAN") {
+      res.status(403).json({ success: false, message: "Unauthorized access" });
+      return;
+    }
+
+    // Fetch the case and its MDT notes
+    const caseWithNotes = await prisma.case.findUnique({
+      where: { id: caseId },
+      include: {
+        MDTNote: true, // Include MDT notes related to the case
+      },
+    });
+
+    if (!caseWithNotes) {
+      res.status(404).json({ success: false, message: "Case not found" });
+      return;
+    }
+
+    // Return the MDT notes for this case
+    res.status(200).json({ success: true, data: caseWithNotes.MDTNote });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Add a note to a case
+export const createNewMDTNote: RequestHandler = async (req, res, next) => {
+  try {
+    assertHasUser(req);
+
+    console.log(req.body);
     
-    const { caseId } = req.params;
+    const { id } = req.params;
     const { note } = req.body;
+
     const loggedInClinicianId = req.user.clinicianId; // Authenticated clinician
 
-    if (!caseId || !note) {
+    if (!id || !note) {
       throw createHttpError(400, "Case ID and note are required");
     }
 
     // Check if the clinician is part of the MDT
     const caseData = await prisma.case.findUnique({
-      where: { id: caseId },
+      where: { id },
       include: {
         MDTNote: true,
         MDTInvite: true,
@@ -45,16 +81,13 @@ export const addCaseNote: RequestHandler = async (req, res, next) => {
     // Add the note
     const caseNote = await prisma.mDTNote.create({
       data: {
-        caseId,
+        caseId: id,
         clinicianId: loggedInClinicianId,
         content: note,
       },
     });
 
-    res.status(201).json({
-      message: "Note added successfully",
-      caseNote,
-    });
+    res.status(201).redirect(`/cases/${id}`); // Redirect to the case details page after adding the note
   } catch (error) {
     next(error);
   }

@@ -3,7 +3,47 @@ import createHttpError from "http-errors";
 import prisma from "../util/prisma";
 import { assertHasUser } from "../util/assertHasUser";
 
-export const inviteToMDT: RequestHandler = async (req, res, next) => {
+export const readAllCollaborators: RequestHandler = async (req, res, next) => {
+  try {
+    assertHasUser(req);
+    const user = req.user; // Assuming req.user is populated from JWT middleware
+
+    // Ensure the user is a clinician
+    if (user.role !== "CLINICIAN") {
+      res.status(403).json({ success: false, message: "Unauthorized access" });
+    }
+
+    // Fetch the case and its collaborators
+    const caseWithCollaborators = await prisma.case.findUnique({
+      where: { id: req.params.caseId },
+      include: {
+        MDTInvite: true, // Include collaborators related to the case
+      },
+    });
+
+    if (!caseWithCollaborators) {
+      res.status(404).json({ success: false, message: "Case not found" });
+      return;
+    }
+
+    res.status(200).json({ success: true, data: caseWithCollaborators.MDTInvite });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getNewCollaboratorForm: RequestHandler = async (req, res, next) => {
+  try {
+    const caseId = req.params.id; // Get the case ID from URL
+    res.render("collaborators/new", { title: "Add New Collaborator", caseId });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createNewCollaborator: RequestHandler = async (req, res, next) => {
   try {
     assertHasUser(req);
     

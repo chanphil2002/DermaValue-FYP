@@ -1,0 +1,408 @@
+<% layout('/layout/boilerplate') %>
+
+<!--begin::App Content Header-->
+<div class="app-content-header">
+    <!--begin::Container-->
+    <div class="container-fluid">
+        <!--begin::Row-->
+        <div class="row">
+        <div class="col-sm-6">
+            <h3 class="mb-0"><%= user.username %>'s Case
+                <% if (caseDetails.isRecovered) { %>
+                    <i class="bi bi-check-circle-fill text-success"></i> <!-- Tick icon -->
+                    <small class="text-success">Recovered</small> <!-- Recovered text -->
+                <% } else { %>
+                    <i class="bi bi-hourglass-split text-warning"></i> <!-- Hourglass icon -->
+                    <small class="text-warning">Ongoing</small> <!-- Ongoing text -->
+                <% } %>
+            </h3>
+        </div>
+        <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-end">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Case</li>
+            </ol>
+        </div>
+        </div>
+        <!--end::Row-->
+    </div>
+    <!--end::Container-->
+</div>
+<!--end::App Content Header-->
+<!--begin::App Content-->
+<div class="app-content">
+<!--begin::Container-->
+<div class="container-fluid">
+    <!--begin::Row-->
+    <div class="row g-4 mb3">
+        <div class="col-12">
+            <div class="callout callout-info d-flex justify-content-between align-items-center mb-3">
+                <!-- Case ID on the left -->
+                <p class="mb-0">Case Id: <%= caseDetails.id %></p>
+
+                <!-- Clinic and Primary Clinician on the right -->
+                <div class="text-end">
+                    <p class="mb-0"> 
+                        Primary Clinician: <%= caseDetails.primaryClinician.user.username %>, 
+                        <%= caseDetails.clinic.name %>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--begin::Row-->
+    <div class="row">
+        <!--begin::Col-->
+        <div class="col-lg-3 col-6">
+            <!--begin::Small Box Widget 1-->
+            <div class="small-box text-bg-primary">
+            <div class="inner">
+                <h3><%= caseDetails.appointments.length %></h3>
+                <p>Appointments</p>
+            </div>
+            <svg
+                class="small-box-icon"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+            >
+                <path
+                d="M2.25 2.25a.75.75 0 000 1.5h1.386c.17 0 .318.114.362.278l2.558 9.592a3.752 3.752 0 00-2.806 3.63c0 .414.336.75.75.75h15.75a.75.75 0 000-1.5H5.378A2.25 2.25 0 017.5 15h11.218a.75.75 0 00.674-.421 60.358 60.358 0 002.96-7.228.75.75 0 00-.525-.965A60.864 60.864 0 005.68 4.509l-.232-.867A1.875 1.875 0 003.636 2.25H2.25zM3.75 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM16.5 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z"
+                ></path>
+            </svg>
+            </div>
+            <!--end::Small Box Widget 1-->
+        </div>
+        <!--end::Col-->
+        <div class="col-lg-3 col-6">
+            <!--begin::Small Box Widget 2-->
+            <div class="small-box text-bg-success">
+            <div class="inner">
+                <h3><%= caseDetails.promResponses.length %><sup class="fs-5"></sup></h3>
+                <p>Total PROMs Filled</p>
+            </div>
+            <svg
+                class="small-box-icon"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+            >
+                <path
+                d="M18.375 2.25c-1.035 0-1.875.84-1.875 1.875v15.75c0 1.035.84 1.875 1.875 1.875h.75c1.035 0 1.875-.84 1.875-1.875V4.125c0-1.036-.84-1.875-1.875-1.875h-.75zM9.75 8.625c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v11.25c0 1.035-.84 1.875-1.875 1.875h-.75a1.875 1.875 0 01-1.875-1.875V8.625zM3 13.125c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v6.75c0 1.035-.84 1.875-1.875 1.875h-.75A1.875 1.875 0 013 19.875v-6.75z"
+                ></path>
+            </svg>
+            </div>
+            <!--end::Small Box Widget 2-->
+        </div>
+        <!--end::Col-->
+        <div class="col-lg-3 col-6">
+            <!--begin::Small Box Widget 3-->
+            <div class="small-box text-bg-warning">
+            <div class="inner">
+                <h3>RM<%= caseDetails.totalCost %></h3>
+                <p>Total Cost Paid</p>
+            </div>
+            <svg
+                class="small-box-icon"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+            >
+                <path
+                d="M6.25 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM3.25 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM19.75 7.5a.75.75 0 00-1.5 0v2.25H16a.75.75 0 000 1.5h2.25v2.25a.75.75 0 001.5 0v-2.25H22a.75.75 0 000-1.5h-2.25V7.5z"
+                ></path>
+            </svg>
+            </div>
+            <!--end::Small Box Widget 3-->
+        </div>
+        <!--end::Col-->
+        <div class="col-lg-3 col-6">
+            <!--begin::Small Box Widget 4-->
+            <div class="small-box text-bg-danger">
+            <div class="inner">
+                <h3><%= caseDetails.disease.name %></h3>
+                <p>Disease Name</p>
+            </div>
+            <svg
+                class="small-box-icon"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+            >
+                <path
+                clip-rule="evenodd"
+                fill-rule="evenodd"
+                d="M2.25 13.5a8.25 8.25 0 018.25-8.25.75.75 0 01.75.75v6.75H18a.75.75 0 01.75.75 8.25 8.25 0 01-16.5 0z"
+                ></path>
+                <path
+                clip-rule="evenodd"
+                fill-rule="evenodd"
+                d="M12.75 3a.75.75 0 01.75-.75 8.25 8.25 0 018.25 8.25.75.75 0 01-.75.75h-7.5a.75.75 0 01-.75-.75V3z"
+                ></path>
+            </svg>
+            </div>
+            <!--end::Small Box Widget 4-->
+        </div>
+        <!--end::Col-->
+        </div>
+        <!--end::Row-->
+    <div class="row">
+        <div class="col-lg-6 d-flex flex-column gap-3">
+            <!--begin::PROM List Widget-->
+            <div class="card card-primary card-outline" style="height: 50%; overflow-y: auto;">
+                <div class="card-header d-flex align-items-center">
+                    <h3 class="card-title">
+                        <%= caseDetails.promResponses && caseDetails.promResponses[0] && caseDetails.promResponses[0].prom
+                          ? caseDetails.promResponses[0].prom.name
+                          : "No PROM Available" %>
+                      </h3>
+                    <% if (user.role === "PATIENT" && !caseDetails.isRecovered) { %>
+                        <a href="/cases/<%= caseDetails.id %>/proms/new" class="text-success text-decoration-none fw-bold ms-auto">
+                            Fill PROM Form
+                        </a>
+                        <% } %>
+                </div>
+                <!-- /.card-header -->
+                <div class="card-body p-0" style="height: 50%; overflow-y: auto;">
+                    <div class="table-responsive">
+                    <table class="table m-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>PROM ID</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <% if (caseDetails.promResponses && caseDetails.promResponses.length > 0) { %>
+                                <% caseDetails.promResponses.forEach(function(response) { %>
+                                <tr>
+                                    <td><%= response.id %></td>
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            COMPLETED
+                                        </span>
+                                    </td>
+                                    <td><%= new Date(response.submittedAt).toLocaleString() %></td>
+                                    <td>
+                                    <a href="/cases/<%= caseDetails.id %>/proms/<%= response.id %>" 
+                                        class="btn btn-sm btn-primary d-flex justify-content-center align-items-center gap-1">
+                                        <span class="me-1">View</span> <i class="bi bi-arrow-right-circle"></i>
+                                    </a>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                <td colspan="4" class="text-center">No PROM forms available.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td colspan="4" class="text-end">
+                            <strong>Case Score:</strong>
+                            <% if (caseDetails.caseScore) { %>
+                                <%= caseDetails.caseScore %>
+                            <% } else { %>
+                                <em>Still in Calculation</em>
+                            <% } %>
+                            </td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <!-- /.table-responsive -->
+            </div>
+            <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+
+        <!-- Appointments Card -->
+        <div class="card card-secondary card-outline shadow-sm rounded">
+            <div class="card-header d-flex align-items-center">
+                <h3 class="card-title mb-0">Appointments</h3>
+                
+                <% if (user.role === "PATIENT" && !caseDetails.isRecovered) { %>
+                    <a href="#" class="btn btn-sm btn-outline-primary ms-auto" data-bs-toggle="modal" data-bs-target="#appointmentModal">
+                      <i class="bi bi-calendar-plus"></i> Book Appointment
+                    </a>
+                <% } %>
+            </div>
+            <!-- /.card-header -->
+
+            <div class="card-body p-0" style="height: 50%; overflow-y: auto;">
+                <% if (caseDetails.appointments.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Appointment ID</th>
+                                    <th>Clinician</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% caseDetails.appointments.forEach(function (appointment) { %>
+                                    <tr>
+                                        <td>
+                                            <a href="/cases/<%= caseDetails.id %>/appointments/<%= appointment.id %>" class="text-decoration-none">
+                                                <%= appointment.id %>
+                                            </a>
+                                        </td>
+                                        <td><%= appointment.clinician.user.username %></td>
+                                        <td><%= new Date(appointment.date).toLocaleString() %></td>
+                                        <td>
+                                            <span class="badge 
+                                                <%= appointment.status === 'COMPLETED' ? 'bg-secondary' : 
+                                                    appointment.status === 'PENDING' ? 'bg-warning text-dark' : 
+                                                    appointment.status === 'CANCELED' ? 'bg-danger' : 
+                                                    'bg-success' %>">
+                                                <%= appointment.status %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="/cases/<%= caseDetails.id %>/appointments/<%= appointment.id %>" 
+                                                class="btn btn-sm btn-primary d-flex justify-content-center 
+                                                align-items-center gap-1">
+                                                <span class="me-1">View</span> <i class="bi bi-arrow-right-circle"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <p class="text-muted text-center my-3">No appointments found.</p>
+                <% } %>
+            </div>
+            <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card card-primary card-outline">
+                <!-- Card Header -->
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Collaboration Notes</h3>
+                    <div class="d-flex align-items-center gap-3 ms-auto">
+                    <!-- <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-lte-toggle="card-collapse">
+                        <i data-lte-icon="expand" class="bi bi-plus-lg"></i>
+                        <i data-lte-icon="collapse" class="bi bi-dash-lg"></i>
+                        </button>
+                    </div> -->
+                    <% if (caseDetails.MDTInvite && caseDetails.MDTInvite.length > 0) { %>
+                        <div class="ms-auto text-end">
+                        <small class="text-muted">
+                            Collaborators: 
+                            <% caseDetails.MDTInvite.forEach(function (invite, index) { %>
+                            <%= invite.clinician.user.username %><%= index < caseDetails.MDTInvite.length - 1 ? ', ' : '' %>
+                            <% }); %>
+                        </small>
+                        </div>
+                    <% } else { %>
+                        <small class="text-muted ms-auto">No Collaborators</small>
+                    <% } %>
+
+                    <% if (user.role === "CLINICIAN" && user.userId === caseDetails.primaryClinician.user.id) { %>
+                        <a href="/cases/<%= caseDetails.id %>/collaborators/new" class="btn btn-outline-primary btn-sm rounded-pill">
+                          Invite Collaborator
+                        </a>
+                    <% } %>
+                    </div>
+                </div>
+                <!-- /.card-header -->
+            
+                <!-- Card Body -->
+                <div class="card-body overflow-auto" style="height: 400px; overflow-y: auto;" id="timeline-container">
+                    <div class="timeline">
+                    <!-- Iterate through MDT notes -->
+                    <% if (caseDetails.MDTNote && caseDetails.MDTNote.length > 0) { %>
+                        <% caseDetails.MDTNote.forEach(function(note) { %>
+                        <!-- Timeline Item -->
+                        <div>
+                            <i class="timeline-icon bi bi-chat-text-fill text-bg-primary"></i>
+                            <div class="timeline-item">
+                            <span class="time">
+                                <i class="bi bi-clock-fill"></i> <%= new Date(note.createdAt).toLocaleString() %>
+                            </span>
+                            <h3 class="timeline-header">
+                                <%= note.clinician.user.username %>
+                                <% if (note.clinician.id === caseDetails.primaryClinician.id) { %>
+                                    <span class="badge bg-primary">Primary Clinician</span>
+                                <% } else { %>
+                                    <span class="badge bg-secondary">Collaborator</span>
+                                <% } %>
+                            </h3>
+                            <div class="timeline-body">
+                                <%= note.content %>
+                            </div>
+                            </div>
+                        </div>
+                        <!-- END Timeline Item -->
+                        <% }); %>
+                    <% } else { %>
+                        <!-- No MDT Notes -->
+                        <div>
+                        <i class="timeline-icon bi bi-exclamation-circle text-bg-warning"></i>
+                        <div class="timeline-item">
+                            <h3 class="timeline-header no-border">No MDT notes available for this case.</h3>
+                        </div>
+                        </div>
+                    <% } %>
+                    <!-- Timeline End -->
+                    <!-- Add Note Form as the Last Timeline Item -->
+                    <% if (user.role === "CLINICIAN") { %>
+                        <div>
+                        <i class="timeline-icon bi bi-pencil-fill text-bg-warning"></i>
+                        <div class="timeline-item">
+                            <div class="timeline-body">
+                            <form action="/cases/<%= caseDetails.id %>/notes" method="POST">
+                                <div class="mb-3">
+                                <textarea
+                                    class="form-control"
+                                    id="note"
+                                    name="note"
+                                    rows="1"
+                                    placeholder="Enter your note here..."
+                                    required
+                                ></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-warning">Submit Note</button>
+                            </form>
+                            </div>
+                        </div>
+                        </div>
+                    <% } %>
+                    </div>
+                </div>
+                <!-- /.card-body -->
+                </div>
+                <!-- /.card -->
+        </div>
+    </div>
+</div>
+<!--end::Container-->
+</div>
+<!--end::App Content-->
+<%- include('../partials/appointmentModal') %>
+
+<!-- Add this script to scroll to the bottom -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const timelineContainer = document.getElementById("timeline-container");
+      if (timelineContainer) {
+        timelineContainer.scrollTop = timelineContainer.scrollHeight;
+      }
+    });
+  </script>

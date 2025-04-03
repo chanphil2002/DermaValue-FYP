@@ -1,0 +1,28 @@
+<% layout('/layout/boilerplate') %>
+
+<!--begin::App Content Header-->
+<div class="app-content-header">
+<!--begin::Container-->
+<div class="container-fluid">
+    <h1>Disease List</h1>
+    <ul>
+        <% diseases.forEach(diseaseItem => { %>
+            <li>
+                <strong>Disease ID:</strong> <%= diseaseItem.id %> <br>
+                <strong>Disease Name:</strong> <%= diseaseItem.name %>
+            </li>
+        <% }) %>
+    </ul>
+    <h1>Clinics List</h1>
+    <ul>
+        <% clinics.forEach(clinicItem => { %>
+            <li>
+                <strong>Clinic ID:</strong> <%= clinicItem.id %> <br>
+                <strong>Clinic Name:</strong> <%= clinicItem.name %>
+            </li>
+        <% }) %>
+    </ul>
+</div>
+<!--end::Container-->
+</div>
+<!--end::App Content-->

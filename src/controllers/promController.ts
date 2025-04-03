@@ -3,7 +3,7 @@ import createHttpError from "http-errors";
 import prisma from "../util/prisma";
 import { $Enums } from "@prisma/client";
 import { assertHasUser } from "../util/assertHasUser";
-import { Question, PromTemplate } from "../@types/types";
+import { Question, PromTemplate, QuestionResponse } from "../@types/types";
 import { nextTick } from "process";
 import { updateClinicScoreOnRecovery } from "../util/calculateScore";
 
@@ -11,7 +11,7 @@ export const addDisease: RequestHandler = async (req, res, next) => {
     try {
         assertHasUser(req);
 
-        const loggedInUserId = req.user.userId;
+        const loggedInUserId = req.user.id;
         const { name } = req.body;
 
         if (!name) {
@@ -38,16 +38,102 @@ export const addDisease: RequestHandler = async (req, res, next) => {
     }
   };
 
-export const createProm: RequestHandler = async (req, res, next) => {
+  export const readAllProms: RequestHandler = async (req, res, next) => {
+    try {
+        assertHasUser(req);
+        const user = req.user; // Ensure the user is authenticated
+    
+        // Ensure user is an admin
+        if (user.role !== "ADMIN") {
+            res.status(403).json({ success: false, message: "Unauthorized access" });
+            return;
+        }
+    
+        // Fetch all PROMs from the database
+        const allProms = await prisma.promResponse.findMany();
+        
+        res.status(200).json({ success: true, data: allProms });
+
+        } catch (error) {
+            next(error);
+        }
+  };
+
+export const getCreateNewPromForm: RequestHandler = async (req, res, next) => {
+    try {
+        assertHasUser(req);
+        const user = req.user;
+
+        // Ensure user is an admin
+        if (user.role !== "ADMIN") {
+            res.status(403).json({ success: false, message: "Unauthorized access" });
+            return;
+        }
+
+        // Render the new PROM form
+        return res.status(200).render("proms/new");
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getFillNewPromForm: RequestHandler = async (req, res, next) => {
+    try {
+        assertHasUser(req);
+        console.log(req.params);
+        const caseId = req.params.id; // Get the case ID from the URL
+        const user = req.user;
+
+        console.log(caseId);
+
+        // Ensure user is an admin
+        if (user.role !== "PATIENT") {
+            res.status(403).json({ success: false, message: "Unauthorized access" });
+            return;
+        }
+
+        const selectedCase = await prisma.case.findUnique({
+            where: { id: caseId }, // Ensure the case belongs to the patient
+            include: { disease: true }, // Include disease details
+        });
+
+        if (!selectedCase || !selectedCase.disease) {
+            res.status(404).json({ success: false, message: "Case or disease not found" });
+            return;
+        }
+
+        // Find the PROM form linked to the disease
+        const promForm = await prisma.prom.findFirst({
+            where: { diseaseId: selectedCase.disease.id }
+        });
+
+        if (!promForm) {
+            res.status(404).json({ success: false, message: "No PROM form found for this disease" });
+            return;
+        }
+
+        // Render the PROM form template with parsed questions
+        res.status(200).render("proms/new", { 
+            user, 
+            promForm: { ...promForm }, 
+            disease: selectedCase.disease,
+            caseId
+        });
+
+        console.log(promForm.questions)
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const submitNewProm: RequestHandler = async (req, res, next) => {
   try {
     assertHasUser(req);
 
-    const loggedInUserId = req.user.userId;
+    const loggedInUserId = req.user.id;
     const { name, diseaseId, questions } = req.body;
-
-    console.log("Received disease name:", name);
-    console.log("Received disease Id:", diseaseId);
-    console.log("Received disease Id:", questions);
     
     // Validate input
     if (!name || !diseaseId || !questions || !Array.isArray(questions) || questions.length === 0) {
@@ -71,26 +157,30 @@ export const createProm: RequestHandler = async (req, res, next) => {
   }
 };
 
+
+
 // Patient fills PROM after treatment
 export const fillProm: RequestHandler = async (req, res, next) => {
     try {
         assertHasUser(req);
+        const { id } = req.params; // Case ID
         const loggedInUserId = req.user.patientId;
+
+        // Convert received data into the desired format
+        const formattedResponses = req.body.questions.map((item: QuestionResponse) => ({
+            score: parseInt(item.score, 10), // Convert score to a number
+            question: item.text, // Store the question text
+        }));
+
+        console.log("Formatted Responses:", formattedResponses);
 
         if (!loggedInUserId) {
             throw createHttpError(401, "User ID is missing or undefined.");
         }
 
-        const { caseId } = req.params;
-        const { responses } = req.body;
-
-        if (!caseId || !responses) {
-        throw createHttpError(400, "Appointment ID and responses are required");
-        }
-
         // Check if appointment exists
         const patientCase = await prisma.case.findUnique({
-            where: { id: caseId },
+            where: { id },
             include: {
                 patient: true,
                 appointments: {
@@ -132,7 +222,7 @@ export const fillProm: RequestHandler = async (req, res, next) => {
 
         const recentProm = await prisma.promResponse.findFirst({
             where: {
-                caseId,
+                id,
                 patientId: loggedInUserId,
                 submittedAt: {
                     gte: twoWeeksAgo,
@@ -154,14 +244,14 @@ export const fillProm: RequestHandler = async (req, res, next) => {
         }
 
         // Validate that all responses match the PROM questions
-        if (responses.length !== promTemplate.questions.length) {
+        if (formattedResponses.length !== promTemplate.questions.length) {
             throw createHttpError(400, "Number of responses must match the PROM questions");
         }
 
         let totalScore = 0;
 
         // Map responses to questions
-        const validatedResponses = responses.map((response: { score: number }, index: number) => {
+        const validatedResponses = formattedResponses.map((response: { score: number }, index: number) => {
             if (!promTemplate.questions[index]) {
                 throw createHttpError(400, "Invalid question response");
             }
@@ -190,7 +280,7 @@ export const fillProm: RequestHandler = async (req, res, next) => {
         // Update case with initial PROM data if first submission
         if (isFirstProm) {
             await prisma.case.update({
-                where: { id: caseId },
+                where: { id },
                 data: {
                     promStart: totalScore,
                     treatmentStart: new Date()
@@ -201,23 +291,44 @@ export const fillProm: RequestHandler = async (req, res, next) => {
         let recoveryStatus;
 
         if (patientCase.promResponses.length >= 1) { // Current submission makes it at least 2
-            recoveryStatus = await evaluateRecovery(caseId);
+            recoveryStatus = await evaluateRecovery(id);
         } else {
             recoveryStatus = { 
                 message: "First PROM recorded - recovery evaluation requires at least 2 PROMs",
                 isFirstProm: true
-            };
+            }; 
         }
 
-        res.status(201).json({ 
-            message: "PROM submitted successfully", 
-            promResponse,
-            recoveryStatus
-        });
+        res.status(201).redirect(`/cases/${id}`); // Redirect to the case page after successful submission
       
     } catch (error) {
       next(error);
     }
+  };
+
+
+  export const readPromById: RequestHandler = async (req, res, next) => {
+    try {
+        assertHasUser(req);
+        const promId = req.params.promId; // Get the PROM ID from the URL
+        const user = req.user; // Ensure the user is authenticated
+  
+        // Fetch the PROM data by ID
+        const prom = await prisma.promResponse.findUnique({
+            where: { id: promId, caseId: req.params.id }, // Ensure the case ID matches
+        });
+  
+        if (!prom) {
+            res.status(404).json({ success: false, message: "PROM not found" });
+            return;
+        }
+  
+        // Return the PROM data for the patient
+        res.render("proms/show", { prom, user });
+
+        } catch (error) {
+            next(error);
+        }
   };
 
 

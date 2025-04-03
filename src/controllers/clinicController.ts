@@ -2,6 +2,10 @@ import { RequestHandler } from "express";
 import createHttpError from "http-errors";
 import prisma from "../util/prisma";
 
+export const showIndexPage: RequestHandler = (req, res) => {
+  res.render("index");
+}
+
 // **Create a new clinic**
 export const createClinic: RequestHandler = async (req, res, next) => {
   try {

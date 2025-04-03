@@ -1,15 +1,20 @@
 import express from "express";
 import * as authController from "../controllers/authController";
 import { $Enums } from "@prisma/client";
+import { authenticateJWT, clearAuthCookie } from "../middleware/auth";
 
 const router = express.Router();
 
-router.post("/register", authController.registerUser);
+router.get("/login/:role", clearAuthCookie, authController.getLoginPage);
 
-router.post("/login/clinician", authController.loginUser($Enums.UserRole.CLINICIAN));
+router.post("/login/:role", clearAuthCookie, authController.loginUser);
 
-router.post("/login/patient", authController.loginUser($Enums.UserRole.PATIENT));
+router.get("/", authenticateJWT, authController.getDashboard);
 
-router.post("/login/admin", authController.loginUser($Enums.UserRole.ADMIN));
+router.get("/register/:role", clearAuthCookie, authController.getRegisterPage);
+
+router.post("/register/:role", clearAuthCookie, authController.registerUser);
+
+router.get("/logout", clearAuthCookie, authController.logout);
 
 export default router;
