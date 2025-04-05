@@ -10,6 +10,9 @@ import collaboratorRouter from "./collaboratorRouter";
 
 const router = express.Router({ mergeParams: true });
 
+router.post("/upload", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT]),
+    caseController.uploadHandler); // Upload image
+    
 router.get("/", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT, $Enums.UserRole.CLINICIAN]),
     caseController.getAllCasesByUsers); // Get all cases for a patient
 

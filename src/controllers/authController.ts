@@ -5,6 +5,7 @@ import prisma from "../util/prisma";
 import { $Enums } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { assertHasUser } from "../util/assertHasUser";
+import { profile } from "console";
 
 // type UserRole = (typeof $Enums.UserRole)[keyof typeof $Enums.UserRole];
 
@@ -53,10 +54,11 @@ export const loginUser: RequestHandler = async (req, res, next) => {
 
     // Construct the JWT payload dynamically based on the role
     const payload: Record<string, any> = {
-      userId: user.id,
+      id: user.id,
       username: user.username,
       email: user.email,
       role: user.role,
+      profileImageUrl: user.profileImageUrl,
     };
 
     if (roleTitle === $Enums.UserRole.CLINICIAN) {

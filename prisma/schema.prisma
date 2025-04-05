@@ -22,6 +22,9 @@ model User {
 
   admin           Admin?        @relation
   adminId         String?
+
+  profileImageUrl String?       // Cloudinary secure URL
+  profileImageId  String?       // Cloudinary public_id (e.g. for deleting/updating)
 }
 
 model Admin {

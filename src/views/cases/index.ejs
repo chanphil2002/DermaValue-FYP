@@ -6,9 +6,19 @@
     <div class="container-fluid">
         <!--begin::Row-->
         <div class="row">
-        <div class="col-sm-6">
-            <h3 class="mb-0">All Case</h3>
-        </div>
+            <div class="col-sm-6">
+                <div class="d-flex align-items-center">
+                    <img
+                        src="<%= user.profileImageUrl || 
+                'https://res.cloudinary.com/ddohywyci/image/upload/v1743808822/DermaValue/users/m77o7kfexwmqgyhqcfkg.jpg' %>"
+                        class="user-image rounded-circle shadow me-2"
+                        alt="User Image"
+                        style="width: 50px; height: 50px;"
+                    />
+
+                    <h4 class="mb-0">All <%= user.username %>'s Case</h4>
+                </div>
+            </div>
         <div class="col-sm-6">
             <ol class="breadcrumb float-sm-end">
             <li class="breadcrumb-item"><a href="#">Home</a></li>
@@ -25,6 +35,28 @@
 <div class="app-content">
     <!--begin::Container-->
     <div class="container-fluid">
+        <div class="card border-0 shadow rounded-4 overflow-hidden mb-4" style="max-width: 400px;">
+            <!-- Image -->
+            <div class="position-relative">
+              <img 
+                src="<%= user.profileImageUrl %>" 
+                class="w-100" 
+                style="height: 150px; object-fit: cover;" 
+                alt="Clinician Image"
+              />
+            </div>
+          
+            <!-- Card Body -->
+            <div class="card-body">
+              <h4 class="fw-bold mb-1"><%= user.username %></h4>
+              <p class="text-muted mb-3"><i class="bi bi-geo-alt-fill me-1"></i> LOCATION</p>
+          
+              <a href="#" class="btn btn-primary w-100 py-2 rounded-pill">
+                <i class="bi bi-calendar-check me-2"></i>Book Appointment Now
+              </a>
+            </div>
+          </div>
+          
         <!-- /.card -->
         <div class="card mb-4">
             <div class="card-header border-0">
