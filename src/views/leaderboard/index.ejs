@@ -1,0 +1,124 @@
+<% layout('/layout/boilerplate') %> <% const diseaseSet = new Set(); %> <%
+clinicScores.forEach(score => diseaseSet.add(score.disease.name)); %> <% const
+diseaseList = Array.from(diseaseSet).sort(); %>
+
+<!--begin::App Content Header-->
+<div class="app-content-header">
+  <!--begin::Container-->
+  <div class="container-fluid">
+    <!--begin::Row-->
+    <div class="row">
+      <div class="col-sm-6">
+        <div class="d-flex align-items-center">
+          <h4 class="mb-0">Leaderboard</h4>
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-end">
+          <li class="breadcrumb-item"><a href="#">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Case</li>
+        </ol>
+      </div>
+    </div>
+    <!--end::Row-->
+  </div>
+  <!--end::Container-->
+</div>
+
+<!--begin::App Content-->
+<div class="app-content">
+  <!--begin::Leaderboard Table-->
+  <div class="container mt-2">
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card shadow-sm rounded-3 p-3">
+          <h6>Total Clinics</h6>
+          <h4><%= clinicScores.length %></h4>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm rounded-3 p-3">
+          <h6>Top Disease</h6>
+          <h4><%= clinicScores[0]?.disease.name %></h4>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm rounded-3 p-3">
+          <h6>Average PROM (All)</h6>
+          <h4>
+            <%= ( clinicScores.reduce((sum, s) => sum + (s.avgPromScore || 0),
+            0) / clinicScores.length ).toFixed(2) %>
+          </h4>
+        </div>
+      </div>
+    </div>
+
+    <table class="table table-striped">
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <label for="diseaseFilter" class="form-label"
+            >Filter by Disease:</label
+          >
+          <select id="diseaseFilter" class="form-select">
+            <option value="all">All Diseases</option>
+            <% diseaseList.forEach(disease => { %>
+            <option value="<%= disease %>"><%= disease %></option>
+            <% }); %>
+          </select>
+        </div>
+      </div>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Clinic Name</th>
+          <th>Disease</th>
+          <th>Total Cases</th>
+          <th>Average PROM Score</th>
+          <th>Average Recovery Days</th>
+          <th>Average Cost per Case</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% clinicScores.forEach((score, index) => { %>
+        <tr>
+          <td>
+            <% if (index === 0) { %> 🥇 <% } else if (index === 1) { %> 🥈 <% }
+            else if (index === 2) { %> 🥉 <% } else { %> <%= index + 1 %> <% }
+            %>
+          </td>
+          <td>
+            <a href="/clinics/<%= score.clinic.id %>">
+              <%= score.clinic.name %>
+            </a>
+          </td>
+          <td><%= score.disease.name %></td>
+          <td><%= score.totalCases %></td>
+          <td>
+            <%= score.avgPromScore ? score.avgPromScore.toFixed(2) : 'N/A' %>
+          </td>
+          <td><%= score.avgDays ? score.avgDays.toFixed(2) : 'N/A' %></td>
+          <td><%= score.avgCost ? score.avgCost.toFixed(2) : 'N/A' %></td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  document
+    .getElementById("diseaseFilter")
+    .addEventListener("change", function () {
+      const selectedDisease = this.value.toLowerCase();
+      const rows = document.querySelectorAll("tbody tr");
+
+      rows.forEach((row) => {
+        const diseaseName = row.children[2].textContent.trim().toLowerCase();
+        if (selectedDisease === "all" || diseaseName === selectedDisease) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    });
+</script>

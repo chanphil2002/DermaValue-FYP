@@ -117,11 +117,13 @@ export const getFillNewPromForm: RequestHandler = async (req, res, next) => {
         res.status(200).render("proms/new", { 
             user, 
             promForm: { ...promForm }, 
+            questions: promForm.questions,
             disease: selectedCase.disease,
             caseId
         });
 
         console.log(promForm.questions)
+        console.log(typeof promForm.questions);
 
     } catch (error) {
         next(error);
@@ -324,7 +326,9 @@ export const fillProm: RequestHandler = async (req, res, next) => {
         }
   
         // Return the PROM data for the patient
-        res.render("proms/show", { prom, user });
+        res.render("proms/show", { prom: { ...prom }, user });
+
+        console.log(typeof(prom.responses));
 
         } catch (error) {
             next(error);

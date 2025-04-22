@@ -1,0 +1,108 @@
+<% layout('/layout/authboilerplate') %>
+
+<div
+  class="container d-flex align-items-center justify-content-center min-vh-100"
+>
+  <div
+    class="row shadow-lg rounded overflow-hidden"
+    style="max-width: 900px; width: 100%"
+  >
+    <!-- Left Image -->
+    <div class="col-md-6 d-none d-md-block p-0">
+      <img
+        src="/assets/img/login-banner.jpg"
+        alt="Register"
+        class="img-fluid h-100 w-100"
+        style="object-fit: cover"
+      />
+    </div>
+
+    <!-- Right Form Section -->
+    <div class="col-md-6 bg-white p-4">
+      <div class="text-center mb-3">
+        <h1><b>Derma</b>Value</h1>
+        <p class="text-muted">Register New Account</p>
+      </div>
+
+      <form action="/register" method="post">
+        <input type="hidden" name="role" value="patient" />
+
+        <!-- Email -->
+        <div class="input-group mb-3">
+          <div class="form-floating flex-grow-1">
+            <input
+              id="registerEmail"
+              name="email"
+              type="email"
+              class="form-control"
+              placeholder=""
+              required
+            />
+            <label for="registerEmail">Email</label>
+          </div>
+          <span class="input-group-text">
+            <i class="bi bi-envelope"></i>
+          </span>
+        </div>
+
+        <!-- Username -->
+        <div class="input-group mb-3">
+          <div class="form-floating flex-grow-1">
+            <input
+              id="registerUsername"
+              name="username"
+              type="text"
+              class="form-control"
+              placeholder=""
+              required
+            />
+            <label for="registerUsername">Username</label>
+          </div>
+          <span class="input-group-text">
+            <i class="bi bi-person-circle"></i>
+          </span>
+        </div>
+
+        <!-- Password -->
+        <div class="input-group mb-3">
+          <div class="form-floating flex-grow-1">
+            <input
+              id="registerPassword"
+              name="password"
+              type="password"
+              class="form-control"
+              placeholder=""
+              required
+            />
+            <label for="registerPassword">Password</label>
+          </div>
+          <span class="input-group-text">
+            <i class="bi bi-lock-fill"></i>
+          </span>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="d-grid gap-2 mb-3">
+          <button type="submit" class="btn btn-primary">Register</button>
+        </div>
+
+        <!-- Links -->
+        <div class="text-center">
+          <p class="mb-0">
+            Already have an account?
+            <a href="/login" class="text-decoration-none fw-semibold"
+              >Login here</a
+            >
+          </p>
+          <p class="mb-0">
+            <a
+              href="/register/clinician"
+              class="text-decoration-none fw-semibold"
+              >Register as Clinician</a
+            >
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

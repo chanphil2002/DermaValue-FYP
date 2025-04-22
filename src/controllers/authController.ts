@@ -6,23 +6,26 @@ import { $Enums } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { assertHasUser } from "../util/assertHasUser";
 import { profile } from "console";
+import { oauth2 } from "googleapis/build/src/apis/oauth2";
+import { oauth2Client } from "../util/google-calendar";
 
 // type UserRole = (typeof $Enums.UserRole)[keyof typeof $Enums.UserRole];
 
 export const getLoginPage: RequestHandler = (req, res) => {
-  const { role } = req.params; // Get the role from the URL parameter
+  // const { role } = req.params; // Get the role from the URL parameter
 
-  const loginPath = `/login/${role}`;
+  // const loginPath = `/login/${role}`;
 
-  res.render("auth/login", { title: role.charAt(0).toUpperCase() + role.slice(1), loginPath } ); // Render the login page
+  // res.render("auth/login", { title: role.charAt(0).toUpperCase() + role.slice(1), loginPath } ); 
+
+  res.render("auth/login", { title: "Login" }); // Render the login page
 }
 
 export const loginUser: RequestHandler = async (req, res, next) => {
   try {
-    const { role } = req.params; // Get the role from the URL parameter
+    // const { role } = req.params; // Get the role from the URL parameter
+    const { email, password, role } = req.body;
     const roleTitle = role.toUpperCase(); // Convert role to uppercase for comparison
-    console.log(roleTitle); // Log the role for debugging
-    const { email, password } = req.body;
 
     if (!email || !password || !role) {
       throw createHttpError(400, "Email and password are required");
@@ -32,8 +35,8 @@ export const loginUser: RequestHandler = async (req, res, next) => {
     const user = await prisma.user.findUnique({
       where: { email },
       include: {
-        clinician: role === $Enums.UserRole.CLINICIAN, // Include clinician data if role is CLINICIAN
-        patient: role === $Enums.UserRole.PATIENT,    // Include patient data if role is PATIENT
+        clinician: roleTitle === $Enums.UserRole.CLINICIAN, // Include clinician data if role is CLINICIAN
+        patient: roleTitle === $Enums.UserRole.PATIENT,    // Include patient data if role is PATIENT
       },
     });
 
@@ -58,16 +61,15 @@ export const loginUser: RequestHandler = async (req, res, next) => {
       username: user.username,
       email: user.email,
       role: user.role,
-      profileImageUrl: user.profileImageUrl,
+      profileImageUrl: user.profileImageUrl
     };
 
     if (roleTitle === $Enums.UserRole.CLINICIAN) {
       payload.clinicianId = user.clinicianId; // Add clinician-specific data
+      payload.clinicId = user.clinician?.clinicId; // Add clinic-specific data
     } else if (roleTitle === $Enums.UserRole.PATIENT) {
       payload.patientId = user.patientId; // Add patient-specific data
     }
-
-    console.log(payload); // Log the payload for debugging
 
     const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "1h" });
 
@@ -75,7 +77,7 @@ export const loginUser: RequestHandler = async (req, res, next) => {
     res.cookie("token", token, {
       httpOnly: true, // Prevent JavaScript access (XSS protection)
       secure: process.env.NODE_ENV === "production", // Use HTTPS in production
-      sameSite: "strict", // Prevent CSRF attacks
+      sameSite: "lax", // Prevent CSRF attacks
       maxAge: 60 * 60 * 1000, // Cookie expires in 1 hour
     });
 
@@ -101,20 +103,32 @@ export const getDashboard: RequestHandler = (req, res, next) => {
   } else { return res.render("index", { title: "DASHBOARD", user }); }
 }
 
-export const getRegisterPage: RequestHandler = (req, res) => {
-  const { role } = req.params; // Get the role from the URL parameter
+export const getPatientRegisterPage: RequestHandler = (req, res) => {
+  // const { role } = req.params; // Get the role from the URL parameter
 
-  const registerPath = `/register/${role}`;
+  // const registerPath = `/register/${role}`;
 
-  res.render("auth/register", { title: role.charAt(0).toUpperCase() + role.slice(1), registerPath } ); // Render the login page
+  // res.render("auth/register", { title: role.charAt(0).toUpperCase() + role.slice(1), registerPath } ); // Render the login page
+  res.render("auth/register-patient", {title: "Register as Patient"}); // Render the login page
+}
+
+export const getClinicianRegisterPage: RequestHandler = async (req, res) => {
+  // const { role } = req.params; // Get the role from the URL parameter
+
+  // const registerPath = `/register/${role}`;
+
+  const clinics = await prisma.clinic.findMany(); // Fetch all clinics from the database
+
+  // res.render("auth/register", { title: role.charAt(0).toUpperCase() + role.slice(1), registerPath } ); // Render the login page
+  res.render("auth/register-clinician", {title: "Register as Clinician", clinics}); // Render the login page
 }
 
 export const registerUser: RequestHandler = async (req, res, next) => {
   try {
-    const { role } = req.params; // Get the role from the URL parameter
-    const roleTitle = role.toUpperCase(); // Convert role to uppercase for comparison
+    const { role } = req.body;
+    const roleTitle = role.toUpperCase(); 
 
-    const { username, email, password, clinic, medicalHistory } = req.body;
+    const { username, email, password, title, clinicId, medicalHistory } = req.body;
 
     if (!username || !email || !password || !roleTitle) {
       throw createHttpError(400, "All fields are required");
@@ -126,15 +140,13 @@ export const registerUser: RequestHandler = async (req, res, next) => {
       throw createHttpError(409, "User already exists");
     }
 
-    if (!email) {
-      throw new Error("Email is required");
+    if (roleTitle === $Enums.UserRole.CLINICIAN && !clinicId) {
+      throw createHttpError(400, "Clinic ID is required for clinicians");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // **Create User and Profile in a Transaction**
     const user = await prisma.$transaction(async (tx) => {
-      // **Create User**
       const newUser = await tx.user.create({
         data: { username, email, password: hashedPassword, role: roleTitle as $Enums.UserRole },
       });
@@ -142,12 +154,16 @@ export const registerUser: RequestHandler = async (req, res, next) => {
       let clinicianId = null;
       let patientId = null;
 
-      // **Create Profile Based on Role**
       if (roleTitle === $Enums.UserRole.CLINICIAN) {
+        const clinic = await prisma.clinic.findUnique({
+          where: { id: clinicId },
+        });
+
         const clinician = await tx.clinician.create({
           data: {
             userId: newUser.id,
-            clinicId: clinic || null, // Allow null clinic
+            clinicId: clinic ? clinic.id : null,
+            title,
             approved: false,
           },
         });
@@ -163,20 +179,14 @@ export const registerUser: RequestHandler = async (req, res, next) => {
         patientId = patient.id;
       }
 
-      console.log(newUser.id);
-      console.log(patientId);
-      console.log(clinicianId);
-
       await tx.user.update({
         where: { id: newUser.id },
-        data: roleTitle === $Enums.UserRole.CLINICIAN
-        ? { clinicianId } // Update only clinicianId if the role is CLINICIAN
-        : { patientId },   // Update only patientId if the role is PATIENT
+        data: roleTitle === $Enums.UserRole.CLINICIAN ? { clinicianId } : { patientId },
       });
+
       return { ...newUser, clinicianId, patientId };
     });
 
-    // Construct the JWT payload dynamically based on the role
     const payload: Record<string, any> = {
       userId: user.id,
       username: user.username,
@@ -185,20 +195,21 @@ export const registerUser: RequestHandler = async (req, res, next) => {
     };
 
     if (roleTitle === $Enums.UserRole.CLINICIAN) {
-      payload.clinicianId = user.clinicianId; // Add clinician-specific data
+      payload.clinicianId = user.clinicianId;
     } else if (roleTitle === $Enums.UserRole.PATIENT) {
-      payload.patientId = user.patientId; // Add patient-specific data
+      payload.patientId = user.patientId;
     }
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "1h" });
+    if (roleTitle !== $Enums.UserRole.CLINICIAN) {
+      const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "1h" });
 
-    // Set HTTP-only Secure Cookie
-    res.cookie("token", token, {
-      httpOnly: true, // Prevent JavaScript access (XSS protection)
-      secure: process.env.NODE_ENV === "production", // Use HTTPS in production
-      sameSite: "strict", // Prevent CSRF attacks
-      maxAge: 60 * 60 * 1000, // Cookie expires in 1 hour
-    });
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 60 * 60 * 1000,
+      });
+    }
 
     res.redirect("/");
 
@@ -207,9 +218,10 @@ export const registerUser: RequestHandler = async (req, res, next) => {
   }
 };
 
+
 export const logout: RequestHandler = (req, res, next) => {
   try {
-    res.redirect("/");  // Redirect to the login page
+    res.redirect("/login");  // Redirect to the login page
 
   } catch (error) {
     next(error);  // Pass any errors to the error handler

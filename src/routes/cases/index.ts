@@ -9,14 +9,11 @@ import promRouter from "./promRouter";
 import collaboratorRouter from "./collaboratorRouter";
 
 const router = express.Router({ mergeParams: true });
-
-router.post("/upload", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT]),
-    caseController.uploadHandler); // Upload image
     
 router.get("/", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT, $Enums.UserRole.CLINICIAN]),
     caseController.getAllCasesByUsers); // Get all cases for a patient
 
-router.get("/new", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT]),
+router.get("/new/:clinicId", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT]),
     caseController.getNewCaseForm); // Get new case page
 
 router.post("/", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT]), 
@@ -24,9 +21,6 @@ router.post("/", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT]),
 
 router.get("/:id", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT, $Enums.UserRole.CLINICIAN]), 
     caseController.readCaseById); // Get case details
-
-router.patch("/:id", authenticateJWT, authorizeRole([$Enums.UserRole.CLINICIAN]), 
-    caseController.acceptOrRejectCase); // Update case status
 
 router.use("/:id/appointments", appointmentRouter);
 router.use("/:id/notes", noteRouter);

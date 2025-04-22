@@ -1,8 +1,7 @@
 import { RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 import createHttpError from "http-errors";
-import { User, $Enums } from "@prisma/client";
-import { assertHasUser } from "../util/assertHasUser";
+import { $Enums } from "@prisma/client";
 
 // Middleware to verify JWT and extract user data
 export const authenticateJWT: RequestHandler = (req, res, next) => {
@@ -10,7 +9,7 @@ export const authenticateJWT: RequestHandler = (req, res, next) => {
     // const token = req.headers.authorization?.split(" ")[1];
     const token = req.cookies.token;
 
-    if (!token) return res.status(401).redirect("/login/patient");
+    if (!token) return res.status(401).redirect("/login");
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!);
 

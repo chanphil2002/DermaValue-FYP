@@ -1,0 +1,141 @@
+<% layout('/layout/boilerplate') %>
+
+<!--begin::App Content Header-->
+<div class="app-content-header">
+  <!--begin::Container-->
+  <div class="container-fluid">
+    <!--begin::Row-->
+
+    <!--end::Row-->
+  </div>
+  <!--end::Container-->
+</div>
+<!--end::App Content Header-->
+
+<!--begin::App Content-->
+<div class="app-content">
+  <!--begin::Container-->
+  <div class="container-fluid">
+    <div class="row g-4 mb-3">
+      <div class="col-12">
+        <!--begin::Quick Example-->
+        <div class="card card-primary card-outline mb-4">
+          <!--begin::Header-->
+          <div class="card-header">
+            <div class="card-title">Create New Disease</div>
+          </div>
+          <!--end::Header-->
+          <!--begin::Form-->
+          <form action="/diseases/" method="POST">
+            <!--begin::Body-->
+            <div class="card-body">
+              <!-- Disease Name -->
+              <div class="mb-3">
+                <label for="diseaseName" class="form-label">Disease Name</label>
+                <input
+                  name="name"
+                  id="diseaseName"
+                  type="text"
+                  class="form-control"
+                  required
+                />
+                <div class="form-text">
+                  This will be the name of the disease.
+                </div>
+              </div>
+
+              <!-- PROM Name -->
+              <div class="mb-3">
+                <label for="promName" class="form-label">PROM Name</label>
+                <input
+                  name="promName"
+                  id="promName"
+                  type="text"
+                  class="form-control"
+                  required
+                />
+                <div class="form-text">
+                  This will be the name of the PROM form.
+                </div>
+              </div>
+
+              <!-- Questions Section -->
+              <div id="questions-section">
+                <div class="mb-3 question-set d-flex align-items-center">
+                  <label for="question1" class="form-label mb-0 me-2"
+                    >Question Set 1</label
+                  >
+                  <input
+                    type="text"
+                    name="questions[0]"
+                    class="form-control me-2"
+                    placeholder="Enter question"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm remove-question-set"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+
+              <!-- Add Another Question Set Button on the Right -->
+              <div class="d-flex justify-content-end">
+                <button
+                  type="button"
+                  id="add-question-set"
+                  class="btn btn-success btn-sm mb-3"
+                >
+                  Add Another Question Set
+                </button>
+              </div>
+            </div>
+            <!--end::Body-->
+            <!--begin::Footer-->
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+            <!--end::Footer-->
+          </form>
+          <!--end::Form-->
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--end::Container-->
+</div>
+<!--end::App Content-->
+
+<script>
+  document
+    .getElementById("add-question-set")
+    .addEventListener("click", function () {
+      const questionSetsContainer =
+        document.getElementById("questions-section");
+      const newQuestionSet = document.createElement("div");
+      newQuestionSet.classList.add("mb-3", "question-set");
+
+      const questionInput = document.createElement("input");
+      questionInput.type = "text";
+      questionInput.name = `questions[${questionSetsContainer.children.length}]`;
+      questionInput.classList.add("form-control");
+      questionInput.placeholder = "Enter question";
+      questionInput.required = true;
+
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.classList.add("btn", "btn-danger", "remove-question-set");
+      removeButton.textContent = "Remove Set";
+
+      removeButton.addEventListener("click", function () {
+        questionSetsContainer.removeChild(newQuestionSet);
+      });
+
+      newQuestionSet.appendChild(questionInput);
+      newQuestionSet.appendChild(removeButton);
+
+      questionSetsContainer.appendChild(newQuestionSet);
+    });
+</script>

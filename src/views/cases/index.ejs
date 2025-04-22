@@ -2,108 +2,88 @@
 
 <!--begin::App Content Header-->
 <div class="app-content-header">
-    <!--begin::Container-->
-    <div class="container-fluid">
-        <!--begin::Row-->
-        <div class="row">
-            <div class="col-sm-6">
-                <div class="d-flex align-items-center">
-                    <img
-                        src="<%= user.profileImageUrl || 
+  <!--begin::Container-->
+  <div class="container-fluid">
+    <!--begin::Row-->
+    <div class="row">
+      <div class="col-sm-6">
+        <div class="d-flex align-items-center">
+          <img
+            src="<%= user.profileImageUrl || 
                 'https://res.cloudinary.com/ddohywyci/image/upload/v1743808822/DermaValue/users/m77o7kfexwmqgyhqcfkg.jpg' %>"
-                        class="user-image rounded-circle shadow me-2"
-                        alt="User Image"
-                        style="width: 50px; height: 50px;"
-                    />
+            class="user-image rounded-circle shadow me-2"
+            alt="User Image"
+            style="width: 50px; height: 50px"
+          />
 
-                    <h4 class="mb-0">All <%= user.username %>'s Case</h4>
-                </div>
-            </div>
-        <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-end">
-            <li class="breadcrumb-item"><a href="#">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Case</li>
-            </ol>
+          <h4 class="mb-0"><%= user.username %>'s Cases</h4>
         </div>
-        </div>
-        <!--end::Row-->
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-end">
+          <li class="breadcrumb-item"><a href="#">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Case</li>
+        </ol>
+      </div>
     </div>
-    <!--end::Container-->
+    <!--end::Row-->
+  </div>
+  <!--end::Container-->
 </div>
 <!--end::App Content Header-->
 <!--begin::App Content-->
 <div class="app-content">
-    <!--begin::Container-->
-    <div class="container-fluid">
-        <div class="card border-0 shadow rounded-4 overflow-hidden mb-4" style="max-width: 400px;">
-            <!-- Image -->
-            <div class="position-relative">
-              <img 
-                src="<%= user.profileImageUrl %>" 
-                class="w-100" 
-                style="height: 150px; object-fit: cover;" 
-                alt="Clinician Image"
-              />
-            </div>
-          
-            <!-- Card Body -->
-            <div class="card-body">
-              <h4 class="fw-bold mb-1"><%= user.username %></h4>
-              <p class="text-muted mb-3"><i class="bi bi-geo-alt-fill me-1"></i> LOCATION</p>
-          
-              <a href="#" class="btn btn-primary w-100 py-2 rounded-pill">
-                <i class="bi bi-calendar-check me-2"></i>Book Appointment Now
-              </a>
-            </div>
-          </div>
-          
-        <!-- /.card -->
-        <div class="card mb-4">
-            <div class="card-header border-0">
-            <h3 class="card-title">Cases</h3>
-            <!-- <div class="card-tools">
-                <a href="#" class="btn btn-tool btn-sm"> <i class="bi bi-download"></i> </a>
-                <a href="#" class="btn btn-tool btn-sm"> <i class="bi bi-list"></i> </a>
-            </div> -->
-            </div>
-            <div class="card-body table-responsive p-0">
-            <table class="table table-striped align-middle">
-                <thead>
-                <tr>
-                    <th>Case ID</th>
-                    <th>Disease</th>
-                    <th>Clinician</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                <% cases.forEach(function(caseItem) { %>
-                    <tr>
-                    <td><%= caseItem.id %></td>
-                    <td><%= caseItem.disease.name %></td>
-                    <td><%= caseItem.primaryClinician.user.username %></td>
-                    <td>
-                        <% if (caseItem.isRecovered) { %>
-                        <span class="badge text-bg-success">Recovered</span>
-                        <% } else { %>
-                        <span class="badge text-bg-warning">In Progress</span>
-                        <% } %>
-                    </td>
-                    <td>
-                        <a href="/cases/<%= caseItem.id %>" class="text-secondary">
-                        <i class="bi bi-search"></i> View
-                        </a>
-                    </td>
-                    </tr>
-                <% }); %>
-                </tbody>
-            </table>
-            </div>
-        </div>
-        <!-- /.card -->
+  <!--begin::Container-->
+  <div class="container-fluid">
+    <div
+      class="card border-0 shadow rounded-4 overflow-hidden mb-4"
+      style="max-width: 400px"
+    ></div>
 
+    <!-- /.card -->
+    <div class="card mb-4">
+      <div class="card-header border-0">
+        <h3 class="card-title">All Cases</h3>
+      </div>
+      <div class="card-body table-responsive p-0">
+        <table class="table table-striped align-middle">
+          <thead>
+            <tr>
+              <th>Case ID</th>
+              <th>Disease</th>
+              <th>Clinician</th>
+              <th>Status</th>
+              <th>Actions</th>
+              <th>Updated At</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% cases.forEach(function(caseItem) { %>
+            <tr>
+              <td><%= caseItem.id %></td>
+              <td><%= caseItem.disease.name %></td>
+              <td><%= caseItem.primaryClinician.user.username %></td>
+              <td>
+                <% if (caseItem.isRecovered) { %>
+                <span class="badge text-bg-success">Recovered</span>
+                <% } else { %>
+                <span class="badge text-bg-warning">In Progress</span>
+                <% } %>
+              </td>
+              <td>
+                <a href="/cases/<%= caseItem.id %>" class="text-secondary">
+                  <i class="bi bi-search"></i> View
+                </a>
+              </td>
+              <td><%= caseItem.updatedAt %></td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <!--end::Container-->
+    <!-- /.card -->
+  </div>
+  <!--end::Container-->
 </div>
 <!--end::App Content-->

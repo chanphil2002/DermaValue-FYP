@@ -1,5 +1,6 @@
 import express from "express";
 import * as appointmentController from "../../controllers/appointmentController";
+import * as caseController from "../../controllers/caseController";
 import { authenticateJWT, authorizeRole } from "../../middleware/auth";
 import { $Enums } from "@prisma/client";
 
@@ -14,8 +15,12 @@ router.post("/", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT]),
 router.get("/:appointmentId", authenticateJWT, authorizeRole([$Enums.UserRole.CLINICIAN, $Enums.UserRole.PATIENT]), 
     appointmentController.readAppointmentById); // Read appointment by id
 
-router.patch("/:appointmentId", authenticateJWT, authorizeRole([$Enums.UserRole.CLINICIAN]), 
+router.patch("/:appointmentId/status", authenticateJWT, authorizeRole([$Enums.UserRole.CLINICIAN]), 
+    caseController.acceptOrRejectCase); // Update case status
+
+router.patch("/:appointmentId/edit", authenticateJWT, authorizeRole([$Enums.UserRole.CLINICIAN]), 
     appointmentController.writeDiagnosis); // Update appointment status
+
 
 export default router;
 

@@ -1,0 +1,107 @@
+<% layout('/layout/boilerplate') %>
+
+<!--begin::App Content Header-->
+<div class="app-content-header">
+    <!--begin::Container-->
+    <div class="container-fluid">
+        <!--begin::Row-->
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="d-flex align-items-center">
+                    <img
+                        src="<%= user.profileImageUrl || 
+                'https://res.cloudinary.com/ddohywyci/image/upload/v1743808822/DermaValue/users/m77o7kfexwmqgyhqcfkg.jpg' %>"
+                        class="user-image rounded-circle shadow me-2"
+                        alt="User Image"
+                        style="width: 50px; height: 50px;"
+                    />
+
+                    <h4 class="mb-0">Admin Dashboard</h4>
+                </div>
+            </div>
+        </div>
+        <!--end::Row-->
+    </div>
+    <!--end::Container-->
+</div>
+<!--end::App Content Header-->
+<!--begin::App Content-->
+<div class="app-content">
+    <!--begin::Container-->
+    <div class="container-fluid">
+      <div class="row g-4 mb-3">
+        <div class="col-6">
+        <!--begin::Quick Example-->
+        <div class="card card-primary card-outline mb-4">
+          <!--begin::Header-->
+          <div class="card-header"><div class="card-title">Create new Clinic</div></div>
+          <!--end::Header-->
+          <!--begin::Form-->
+          <form action="/clinics/" method="POST" enctype="multipart/form-data">
+            <!--begin::Body-->
+            <div class="card-body">
+              <div class="mb-3">
+                <label for="clinicName" class="form-label">Name</label>
+                <input name="name" id="clinicName" type="text" class="form-control"/>
+                <div class="form-text"> This will be shown in your profile.</div>
+              </div>
+              <div class="mb-3">
+                <label for="geocoder" class="form-label">Location</label>
+                <div id="geocoder" style="min-height: 48px;"></div>
+                <input type="hidden" name="location" id="location" />
+              </div>
+              <div class="input-group mb-3">
+                <input name="clinicImageFile" type="file" class="form-control" id="inputGroupFile02" />
+                <label class="input-group-text" for="inputGroupFile02">Upload</label>
+              </div>
+            </div>
+            <!--end::Body-->
+            <!--begin::Footer-->
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+            <!--end::Footer-->
+          </form>
+          <!--end::Form-->
+        </div>
+      </div>
+    </div>
+        
+
+    </div>
+    <!--end::Container-->
+</div>
+<!--end::App Content-->
+
+<!-- Mapbox JS -->
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js"></script>
+
+<script>
+  mapboxgl.accessToken = 'pk.eyJ1IjoiY2hhbnBoaWwwMiIsImEiOiJjbHU3bHZpMm8wNzlzMmpxcnlzZ3Q0ejV6In0.UYPAdP-ZaJdSFibJWZQcew';
+
+  window.onload = function () {
+      // Initialize Geocoder
+      const geocoder = new MapboxGeocoder({
+        accessToken: mapboxgl.accessToken,
+        placeholder: 'Enter a location',
+        mapboxgl: mapboxgl,
+        marker: false
+      });
+
+      geocoder.addTo('#geocoder');
+
+      // Capture selected location result
+      geocoder.on('result', function (e) {
+        const location = e.result.place_name;
+        document.getElementById('location').value = location;
+        document.getElementById('preview').textContent = location;
+      });
+
+      // Clear input when geocoder is cleared
+      geocoder.on('clear', function () {
+        document.getElementById('location').value = '';
+        document.getElementById('preview').textContent = '';
+      });
+    };
+</script>

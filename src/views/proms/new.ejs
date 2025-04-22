@@ -2,88 +2,105 @@
 
 <!--begin::App Content Header-->
 <div class="app-content-header">
-    <!--begin::Container-->
-    <div class="container-fluid">
-        <!--begin::Row-->
-        <div class="row">
-        <div class="col-sm-6"><h3 class="mb-0">General Form</h3></div>
-        <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-end">
-            <li class="breadcrumb-item"><a href="#">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">General Form</li>
-            </ol>
-        </div>
-        </div>
-        <!--end::Row-->
+  <!--begin::Container-->
+  <div class="container-fluid">
+    <!--begin::Row-->
+    <div class="row">
+      <div class="col-sm-6"><h3 class="mb-0">General Form</h3></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-end">
+          <li class="breadcrumb-item"><a href="#">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">
+            General Form
+          </li>
+        </ol>
+      </div>
     </div>
-    <!--end::Container-->
+    <!--end::Row-->
+  </div>
+  <!--end::Container-->
 </div>
 <!--end::App Content Header-->
 <div class="app-content">
-    <!--begin::Container-->
-    <div class="container-fluid">
-        <!--begin::Row-->
-        <div class="row g-4">
-            <div class="col-md-6">
-                <!--begin::Quick Example-->
-                <div class="card card-primary card-outline mb-4 shadow-lg border-0">
-                    <!--begin::Header-->
-                    <div class="card-header bg-gradient-primary text-white border-0">
-                        <h3 class="card-title">Quick Example</h3>
-                    </div>
-                    <!--end::Header-->
-                    
-                    <!--begin::Form-->
-                    <form action="/cases/<%= caseId %>/proms" method="POST">
-                        <!--begin::Body-->
-                        <div class="card-body p-4">
-                            <% promForm.questions.forEach(function(question, index) { %>
-                                <div class="mb-4">
-                                    <label for="question<%= index %>" class="form-label text-dark fw-bold fs-5">
-                                        <%= question.questionText %>
-                                    </label>
-                        
-                                    <!-- Hidden input to store question text -->
-                                    <input type="hidden" name="questions[<%= index %>][text]" value="<%= question.questionText %>" />
-                        
-                                    <!-- Slider Input -->
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <span class="text-muted">1</span>
-                                        <input 
-                                            type="range" 
-                                            class="form-range" 
-                                            id="question<%= index %>" 
-                                            name="questions[<%= index %>][score]" 
-                                            min="1" 
-                                            max="10" 
-                                            value="5" 
-                                            step="1"
-                                            style="width: 80%;"
-                                        />
-                                        <span class="text-muted">10</span>
-                                    </div>
-                                    <div class="text-center mt-2">
-                                        <small class="text-muted">Please rate from 1 (Lowest) to 10 (Highest)</small>
-                                    </div>
-                                </div>
-                            <% }); %>
-                        </div>
-                        <!--end::Body-->
-                        
-                        <!--begin::Footer-->
-                        <div class="card-footer bg-transparent border-0 d-flex justify-content-end p-4">
-                            <button type="submit" class="btn btn-primary btn-lg shadow-sm px-5 py-2 rounded-3">Submit Feedback</button>
-                        </div>
-                        <!--end::Footer-->
-                    </form>
-                    <!--end::Form-->
-                </div>
-                <!--end::Quick Example-->
+  <!--begin::Container-->
+  <div class="container-fluid">
+    <!--begin::Row-->
+    <div class="row g-4">
+      <div class="col-md-6">
+        <!--begin::Quick Example-->
+        <div class="card card-primary card-outline mb-4 shadow-lg border-0">
+          <!--begin::Header-->
+          <div class="card-header bg-gradient-primary text-white border-0">
+            <h3 class="card-title">Quick Example</h3>
+          </div>
+          <!--end::Header-->
 
+          <!--begin::Form-->
+          <form action="/cases/<%= caseId %>/proms" method="POST">
+            <!--begin::Body-->
+            <div class="card-body p-4">
+              <% promForm.questions.forEach(function(question, index) { %>
+              <div class="mb-4">
+                <label
+                  for="question<%= index %>"
+                  class="form-label text-dark fw-bold fs-5"
+                >
+                  <%= question.question %>
+                </label>
+
+                <!-- Hidden input to store question text -->
+                <input
+                  type="hidden"
+                  name="questions[<%= index %>][text]"
+                  value="<%= question.question %>"
+                />
+
+                <!-- Slider Input -->
+                <div class="d-flex align-items-center justify-content-between">
+                  <span class="text-muted">1</span>
+                  <input
+                    type="range"
+                    class="form-range"
+                    id="question<%= index %>"
+                    name="questions[<%= index %>][score]"
+                    min="1"
+                    max="10"
+                    value="5"
+                    step="1"
+                    style="width: 80%"
+                  />
+                  <span class="text-muted">10</span>
+                </div>
+                <div class="text-center mt-2">
+                  <small class="text-muted"
+                    >Please rate from 1 (Lowest) to 10 (Highest)</small
+                  >
+                </div>
+              </div>
+              <% }); %>
             </div>
+            <!--end::Body-->
+
+            <!--begin::Footer-->
+            <div
+              class="card-footer bg-transparent border-0 d-flex justify-content-end p-4"
+            >
+              <button
+                type="submit"
+                class="btn btn-primary btn-lg shadow-sm px-5 py-2 rounded-3"
+              >
+                Submit Feedback
+              </button>
+            </div>
+            <!--end::Footer-->
+          </form>
+          <!--end::Form-->
         </div>
-        <!--end::Row-->
+        <!--end::Quick Example-->
+      </div>
     </div>
-    <!--end::Container-->
+    <!--end::Row-->
+  </div>
+  <!--end::Container-->
 </div>
 <!--end::App Content-->

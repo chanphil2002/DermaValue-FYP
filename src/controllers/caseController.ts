@@ -3,37 +3,15 @@ import createHttpError from "http-errors";
 import prisma from "../util/prisma";
 import { $Enums } from "@prisma/client";
 import { assertHasUser } from "../util/assertHasUser";
-import { uploadImage } from '../util/cloudinary/index';
-
-export const uploadHandler: RequestHandler = async (req, res, next) => {
-    try {
-      assertHasUser(req);
-      const user = req.user;
-      const { imageUrl } = req.body;// or req.body.image
-      const result = await uploadImage(imageUrl, user.id); // Pass the user ID to the upload function
-
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { 
-          profileImageUrl: result.uploadResult.secure_url,
-          profileImageId: result.uploadResult.public_id,
-        }, // Save the optimized URL to the user record
-      })
-
-      res.json({
-          message: 'Image uploaded successfully!',
-          result
-      });
-    } catch (error) {
-        res.status(500).json({ message: 'Upload failed', error });
-    }
-};
+import { getOAuth2Client } from "./appointmentController";
+import { listEvents } from "../util/google-calendar";
 
 export const getAllCasesByUsers: RequestHandler = async (req, res, next) => {
   try {
     assertHasUser(req);
     const user = req.user;
 
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
     let cases;
 
     if (user.role === "PATIENT") {
@@ -43,6 +21,9 @@ export const getAllCasesByUsers: RequestHandler = async (req, res, next) => {
 
       cases = await prisma.case.findMany({
         where: { patientId: user.patientId }, // Fetch cases where the patient is involved
+        orderBy: {
+          updatedAt: 'desc', // sort by most recently updated
+        },
         include: {
           primaryClinician: { include: { user: true } }, // Include the primary clinician details
           patient: { include: { user: true } },
@@ -64,6 +45,9 @@ export const getAllCasesByUsers: RequestHandler = async (req, res, next) => {
             { MDTInvite: { some: { clinicianId: user.clinicianId } } }, // Fetch cases where the clinician is a collaborator
           ],
         },
+        orderBy: {
+          updatedAt: 'desc', // sort by most recently updated
+        },
         include: {
           patient: { include: { user: true } },
           disease: true,
@@ -72,11 +56,17 @@ export const getAllCasesByUsers: RequestHandler = async (req, res, next) => {
           primaryClinician: { include: { user: true } }, // Include the primary clinician details
         },
       });
+
     } else {
       throw createHttpError(403, "Unauthorized role");
     }
 
-    res.render("cases/index", { title: "Cases", cases, user });
+    const casesWithNewFlag = cases.map(c => ({
+      ...c,
+      isNew: c.updatedAt ? c.updatedAt > oneDayAgo : false,
+    }));
+
+    res.render("cases/index", { title: "Cases", cases: casesWithNewFlag, user });
   } catch (error) {
     next(error);
   }
@@ -86,13 +76,28 @@ export const getNewCaseForm : RequestHandler = async (req, res, next) => {
   try {
     assertHasUser(req);
     const user = req.user;
+    const clinicId = req.params.clinicId; // Assuming the clinic ID is passed in the URL
 
-    // Fetch diseases and clinics for the form
+    const clinic = await prisma.clinic.findUnique({
+      where: { id: clinicId },
+      include: {
+        clinicians: { include: { user: true } }
+      },
+    });
+
+    // Loop through clinicians and get availability for each
+    if (!clinic) {
+      throw createHttpError(404, "Clinic not found");
+    }
+
     const diseases = await prisma.disease.findMany();
-    const clinics = await prisma.clinic.findMany();
 
-    res.render("cases/new", { 
-      title: "Create New Case", user, diseases, clinics, currentPath: req.path });
+    res.render("cases/new", 
+      { title: "Create Appointment", 
+        user, 
+        clinic, 
+        diseases
+      });
   } catch (error) {
     next(error);
   }
@@ -102,8 +107,12 @@ export const createCase: RequestHandler = async (req, res, next) => {
   try {
     assertHasUser(req);
 
-    const { clinician, clinic, date, diseaseId } = req.body;
+    const { clinic, date, diseaseId, description } = req.body;
     const patientId = req.user.patientId; // Authenticated user
+
+    const clinician = "274b94a4-d235-47a4-a31f-751c0ef4887a"; // Clinician ID from the form
+
+    console.log(req.body);
 
     if (!clinician || !clinic || !date) {
       throw createHttpError(400, "All fields are required");
@@ -142,12 +151,13 @@ export const createCase: RequestHandler = async (req, res, next) => {
         clinicianId: clinician,
         clinicId: clinic,
         caseId: existingCase.id,
+        description,
         date: new Date(date),
         status: $Enums.AppointmentStatus.PENDING, // Default status
       },
     });
 
-    res.status(201).json({ message: "Appointment booked successfully", appointment, case: existingCase });
+    res.redirect(`/cases/${existingCase.id}`); // Redirect to the case details page
     
   } catch (error) {
     next(error);
@@ -159,7 +169,6 @@ export const readCaseById: RequestHandler = async (req, res, next) => {
     assertHasUser(req);
     const user = req.user;
     const caseId = req.params.id;
-    console.log(user.profileImageUrl);
 
     // Find the appointment and include related details
     const caseDetails = await prisma.case.findUnique({
@@ -183,6 +192,7 @@ export const readCaseById: RequestHandler = async (req, res, next) => {
                 user: true, // Include the user associated with the clinician
               },
             },
+            clinic: true  // Include the clinic associated with the appointment
           },
         },
         promResponses: {
@@ -228,9 +238,11 @@ export const readCaseById: RequestHandler = async (req, res, next) => {
 export const acceptOrRejectCase: RequestHandler = async (req, res, next) => {
   try {
     assertHasUser(req);
-    const { id } = req.params;
+    const { id, appointmentId } = req.params;
     const loggedInUserId = req.user.id;
     const action = req.body.action;
+
+    console.log("Action:", action);
 
     if (!action || (action !== 'confirm' && action !== 'reject')) {
       throw createHttpError(400, "Invalid action. Action must be 'confirm' or 'reject'.");
@@ -238,7 +250,7 @@ export const acceptOrRejectCase: RequestHandler = async (req, res, next) => {
 
     // Find the appointment and include related details
     const appointment = await prisma.appointment.findUnique({
-      where: { id },
+      where: { id: appointmentId },
       include: {
         clinician: {
           include: {
@@ -274,7 +286,7 @@ export const acceptOrRejectCase: RequestHandler = async (req, res, next) => {
 
     // Update appointment status based on action
     const updatedAppointment = await prisma.appointment.update({
-      where: { id },
+      where: { id: appointmentId },
       data: {
         status:
           action === 'confirm'
@@ -283,10 +295,7 @@ export const acceptOrRejectCase: RequestHandler = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({
-      message: `Appointment ${action === 'confirm' ? 'confirmed' : 'rejected'} successfully`,
-      appointment: updatedAppointment,
-    });
+    res.status(200).redirect(`/cases/${id}`); // Redirect to the case details page
 
   } catch (error) {
     next(error);

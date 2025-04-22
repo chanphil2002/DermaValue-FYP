@@ -2,11 +2,133 @@
 
 <!--begin::App Content Header-->
 <div class="app-content-header">
-<!--begin::Container-->
-<div class="container-fluid">
-    <h1><%= title %></h1>
-    <strong>Appointment ID:</strong> <%= appointment.id %> <br>
+  <div class="container-fluid">
+    <strong>Appointment ID:</strong> <small><%= appointment.id %></small>
+    <br/>
+  </div>
 </div>
-<!--end::Container-->
+
+<!--begin::Form + Image Layout-->
+<div class="container mt-4">
+  <div class="row d-flex align-items-stretch">
+    <!-- Left Column: Form -->
+    <div class="col-md-8 d-flex flex-column">
+      <% if (appointment.status === 'CONFIRMED' && user.role === 'CLINICIAN') { %>
+        <form 
+          action="/cases/<%= appointment.case.id %>/appointments/<%= appointment.id %>/edit?_method=PATCH" 
+          method="POST">
+          <input type="hidden" name="_method" value="PATCH" />
+      <% } %>
+
+      <div class="card flex-grow-1">
+        <div class="card-body d-flex flex-column">
+          <!-- Row: Appointment Date, Time -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Appointment Date</label>
+              <input type="text" class="form-control" value="<%= appointment.date.toLocaleDateString() %>" disabled />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Appointment Time</label>
+              <input type="text" class="form-control" value="<%= appointment.date.toLocaleTimeString() %>" disabled />
+            </div>
+          </div>
+
+          <!-- Diagnosis Description -->
+          <div class="mb-3">
+            <label for="diagnosisDescription" class="form-label">Diagnosis Description</label>
+            <textarea
+            class="form-control"
+            name="diagnosisDescription"
+            id="diagnosisDescription"
+            rows="3"
+            <%= (appointment.diagnosisDescription || appointment.status !== 'CONFIRMED' || user.role !== 'CLINICIAN') ? 'disabled' : '' %>
+          ><%= appointment.diagnosisDescription || '' %></textarea>
+          
+          </div>
+
+          <!-- Treatment Plan -->
+          <div class="mb-3">
+            <label for="treatmentPlan" class="form-label">Treatment Plan</label>
+            <textarea
+              class="form-control"
+              name="treatmentPlan"
+              id="treatmentPlan"
+              rows="3"
+              <%= (appointment.treatmentPlan || appointment.status !== 'CONFIRMED' || user.role !== 'CLINICIAN') ? 'disabled' : '' %>
+            ><%= appointment.treatmentPlan || '' %></textarea>
+          </div>
+
+          <!-- Total Cost -->
+          <div class="mb-3">
+            <label for="totalCost" class="form-label">Total Cost (RM)</label>
+            <input
+            type="number"
+            class="form-control"
+            name="price"
+            id="totalCost"
+            placeholder="Enter total cost"
+            min="0"
+            step="0.01"
+            value="<%= appointment.price || '' %>"
+            <%= (appointment.price || appointment.status !== 'CONFIRMED' || user.role !== 'CLINICIAN') ? 'disabled' : '' %>
+          />
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="mt-3">
+            <% if (appointment.status === 'PENDING' && user.role === "CLINICIAN") { %>
+              <form action="/cases/<%= appointment.case.id %>/appointments/<%= appointment.id %>/status?_method=PATCH" method="POST" class="d-inline">
+                <input type="hidden" name="_method" value="PATCH" />
+                <button type="submit" name="action" class="btn btn-success" value="confirm">Accept</button>
+              </form>
+              <form action="/cases/<%= appointment.case.id %>/appointments/<%= appointment.id %>/status?_method=PATCH" method="POST" class="d-inline">
+                <input type="hidden" name="_method" value="PATCH" />
+                <button type="submit" name="action" class="btn btn-danger" value="reject" >Reject</button>
+              </form>
+              <a href="/cases/<%= appointment.case.id %>" class="btn btn-secondary">Back to Case</a>
+
+            <% } else if (appointment.status === 'CONFIRMED' && user.role === "CLINICIAN") { %>
+              <button type="submit" name="action" class="btn btn-primary">Submit Diagnosis</button>
+              <a href="/cases/<%= appointment.case.id %>" class="btn btn-secondary">Back to Case</a>
+
+            <% } else { %>
+              <a href="/cases/<%= appointment.case.id %>" class="btn btn-secondary">Back to Case</a>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <% if (appointment.status === 'CONFIRMED' && user.role === 'CLINICIAN') { %>
+      </form>
+    <% } %>
+    </div>
+
+    <!-- Right Column: Image Card -->
+    <div class="col-md-4 d-flex">
+      <div class="card w-100 h-100">
+        <img
+          src="<%= appointment.case?.imageUrl || 'https://res.cloudinary.com/ddohywyci/image/upload/v1745087160/DermaValue/clinics/lzuhdbuwg7xtwqurusfy.jpg' %>"
+          class="card-img-top"
+          alt="Patient Case Image"
+          style="object-fit: cover; height: 300px"
+        />
+
+        <div class="card-body">
+          <div class="mb-4">
+            <strong>Patient Name:</strong> <%= appointment.patient.user.username %>
+          </div>
+          <div class="mb-2">
+            <strong>Disease:</strong> <%= appointment.case?.disease?.name || 'N/A' %>
+          </div>
+          <div class="mb-2">
+            <strong>Clinic:</strong> <%= appointment.clinic?.name || 'N/A' %>
+          </div>
+          <div class="mb-2">
+            <strong>Description:</strong> <%= appointment.description || 'N/A' %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-<!--end::App Content-->

@@ -5,13 +5,13 @@ import { $Enums } from "@prisma/client";
 
 const router = express.Router();
 
-router.get("/", authenticateJWT, authorizeRole([$Enums.UserRole.CLINICIAN]), clinicianController.getClinicians);
+router.get("/", authenticateJWT, clinicianController.getClinicians);
 
-router.get("/:id", authenticateJWT, authorizeRole([$Enums.UserRole.CLINICIAN]), clinicianController.getClinician);
+router.get("/:id", authenticateJWT, clinicianController.getClinician);
 
-router.patch<{ id: string }>("/:id", authenticateJWT, authorizeRole([$Enums.UserRole.CLINICIAN]), clinicianController.updateClinician);
+router.patch<{ id: string }>("/:id", authenticateJWT, clinicianController.updateClinician);
 
-router.delete("/:id", authenticateJWT, authorizeRole([$Enums.UserRole.CLINICIAN]), clinicianController.deleteClinician);
+router.delete("/:id", authenticateJWT, clinicianController.deleteClinician);
 
 export default router;
 

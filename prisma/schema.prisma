@@ -8,43 +8,47 @@ datasource db {
 }
 
 model User {
-  id              String        @id @default(uuid())
-  username        String
-  email           String        @unique
-  password        String
-  role            UserRole
+  id       String   @id @default(uuid())
+  username String
+  email    String   @unique
+  password String
+  role     UserRole
 
-  clinician       Clinician?    @relation
-  clinicianId     String? 
+  clinician   Clinician? @relation
+  clinicianId String?
 
-  patient         Patient?      @relation
-  patientId       String?
+  patient   Patient? @relation
+  patientId String?
 
-  admin           Admin?        @relation
-  adminId         String?
+  admin   Admin?  @relation
+  adminId String?
 
-  profileImageUrl String?       // Cloudinary secure URL
-  profileImageId  String?       // Cloudinary public_id (e.g. for deleting/updating)
+  profileImageUrl String? // Cloudinary secure URL
+  profileImageId  String? // Cloudinary public_id (e.g. for deleting/updating)
+
+  googleAccessToken    String?
+  googleRefreshToken   String?
+  googleTokenExpiresAt DateTime?
 }
 
 model Admin {
-  id              String        @id @default(uuid())
-  user            User          @relation(fields: [userId], references: [id])
-  userId          String        @unique
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique
 }
 
 model Clinician {
-  id              String        @id @default(uuid())
-  user            User          @relation(fields: [userId], references: [id])
-  title           String        @default("Unknown")
-  userId          String        @unique
-  clinic          Clinic?       @relation(fields: [clinicId], references: [id])
-  clinicId        String?
-  approved        Boolean       @default(false)
+  id       String  @id @default(uuid())
+  user     User    @relation(fields: [userId], references: [id])
+  title    String  @default("Unknown")
+  userId   String  @unique
+  clinic   Clinic? @relation(fields: [clinicId], references: [id])
+  clinicId String?
+  approved Boolean @default(false)
 
-  appointments    Appointment[]
+  appointments Appointment[]
 
-  PromResponse    PromResponse[]
+  PromResponse PromResponse[]
 
   Case Case[]
 
@@ -54,144 +58,153 @@ model Clinician {
 }
 
 model Patient {
-  id              String        @id @default(uuid())
-  user            User          @relation(fields: [userId], references: [id])
-  userId          String        @unique
-  medicalHistory  String?
-  appointments    Appointment[]
+  id             String        @id @default(uuid())
+  user           User          @relation(fields: [userId], references: [id])
+  userId         String        @unique
+  medicalHistory String?
+  appointments   Appointment[]
 
-  PromResponse    PromResponse[]
+  PromResponse PromResponse[]
 
   cases Case[]
 }
 
 model Clinic {
-  id              String        @id @default(uuid())
-  name            String
-  location        String
-  clinicians      Clinician[]
+  id         String      @id @default(uuid())
+  name       String
+  location   String
+  clinicians Clinician[]
 
-  Appointment     Appointment[]
+  Appointment Appointment[]
 
-  ClinicScore     ClinicScore[]
+  ClinicScore ClinicScore[]
 
-  Case            Case[]
+  Case Case[]
+
+  profileImageUrl String? @default("https://res.cloudinary.com/dxqj5v0gk/image/upload/v1697031234/clinic_default.png")
+  profileImageId  String? // Cloudinary public_id (e.g. for deleting/updating)
 }
 
 model ClinicScore {
-  id                      String        @id @default(uuid())
-  clinic                  Clinic        @relation(fields: [clinicId], references: [id])
-  clinicId                String
-  disease                 Disease       @relation(fields: [diseaseId], references: [id])
-  diseaseId               String
+  id        String  @id @default(uuid())
+  clinic    Clinic  @relation(fields: [clinicId], references: [id])
+  clinicId  String
+  disease   Disease @relation(fields: [diseaseId], references: [id])
+  diseaseId String
 
-  totalCases              Int           @default(0)   // Total cases resolved
-  totalPromScore          Float         @default(0)   // Sum of all PROM scores
-  totalDays               Int           @default(0)   // Sum of recovery days
-  totalCost               Float         @default(0)   // Sum of costs
+  totalCases     Int   @default(0) // Total cases resolved
+  totalPromScore Float @default(0) // Sum of all PROM scores
+  totalDays      Int   @default(0) // Sum of recovery days
+  totalCost      Float @default(0) // Sum of costs
 
-  avgPromScore            Float?  // Average PROM score per disease
-  avgDays                 Float?  // Average days taken for recovery
-  avgCost                 Float?  // Average cost per case
-  
+  avgPromScore Float? // Average PROM score per disease
+  avgDays      Float? // Average days taken for recovery
+  avgCost      Float? // Average cost per case
+
   @@unique([clinicId, diseaseId])
 }
 
 model Case {
-  id                      String              @id @default(uuid())
-  patient                 Patient             @relation(fields: [patientId], references: [id])
-  patientId               String
-  disease                 Disease             @relation(fields: [diseaseId], references: [id])
-  diseaseId               String
-  appointments            Appointment[]
-  promResponses           PromResponse[]
-  totalCost               Float               @default(0)
-  promStart               Float?
-  promEnd                 Float?
-  treatmentStart          DateTime
-  treatmentEnd            DateTime?
-  isRecovered             Boolean             @default(false)
-  caseScore               Float?              // Individual case score
+  id             String         @id @default(uuid())
+  patient        Patient        @relation(fields: [patientId], references: [id])
+  patientId      String
+  disease        Disease        @relation(fields: [diseaseId], references: [id])
+  diseaseId      String
+  appointments   Appointment[]
+  promResponses  PromResponse[]
+  totalCost      Float          @default(0)
+  promStart      Float?
+  promEnd        Float?
+  treatmentStart DateTime
+  treatmentEnd   DateTime?
+  isRecovered    Boolean        @default(false)
+  caseScore      Float? // Individual case score
 
-  primaryClinician        Clinician           @relation(fields: [primaryClinicianId], references: [id])
-  primaryClinicianId      String
+  primaryClinician   Clinician @relation(fields: [primaryClinicianId], references: [id])
+  primaryClinicianId String
 
-  clinic                  Clinic              @relation(fields: [clinicId], references: [id])
-  clinicId                String              
+  clinic   Clinic @relation(fields: [clinicId], references: [id])
+  clinicId String
 
   MDTInvite MDTInvite[]
-  MDTNote MDTNote[]
+  MDTNote   MDTNote[]
+
+  updatedAt DateTime? @updatedAt
 }
 
 model MDTInvite {
-  id                      String              @id @default(uuid())
-  case                    Case                @relation(fields: [caseId], references: [id])
-  caseId                  String
-  clinician               Clinician           @relation(fields: [clinicianId], references: [id])
-  clinicianId             String
-  joinedAt                DateTime            @default(now())
+  id          String    @id @default(uuid())
+  case        Case      @relation(fields: [caseId], references: [id])
+  caseId      String
+  clinician   Clinician @relation(fields: [clinicianId], references: [id])
+  clinicianId String
+  joinedAt    DateTime  @default(now())
 
   // Unique constraint to prevent duplicate invites for the same case
   @@unique([caseId, clinicianId])
 }
 
 model MDTNote {
-  id                      String              @id @default(uuid())
-  case                    Case                @relation(fields: [caseId], references: [id])
-  caseId                  String
-  clinician               Clinician           @relation(fields: [clinicianId], references: [id])
-  clinicianId             String
-  content                 String
-  createdAt               DateTime            @default(now())
+  id          String    @id @default(uuid())
+  case        Case      @relation(fields: [caseId], references: [id])
+  caseId      String
+  clinician   Clinician @relation(fields: [clinicianId], references: [id])
+  clinicianId String
+  content     String
+  createdAt   DateTime  @default(now())
 }
 
 model Appointment {
-  id                      String              @id @default(uuid())
-  patient                 Patient             @relation(fields: [patientId], references: [id])
-  patientId               String
-  clinician               Clinician           @relation(fields: [clinicianId], references: [id])
-  clinicianId             String
-  clinic                  Clinic?             @relation(fields: [clinicId], references: [id])
-  clinicId                String?
-  date                    DateTime
-  status                  AppointmentStatus   @default(PENDING)
-  diagnosisDescription    String?
-  treatmentPlan           String? 
-  case                    Case?               @relation(fields: [caseId], references: [id])
-  caseId                  String?             @unique
+  id                   String            @id @default(uuid())
+  patient              Patient           @relation(fields: [patientId], references: [id])
+  patientId            String
+  clinician            Clinician         @relation(fields: [clinicianId], references: [id])
+  clinicianId          String
+  clinic               Clinic?           @relation(fields: [clinicId], references: [id])
+  clinicId             String?
+  date                 DateTime
+  status               AppointmentStatus @default(PENDING)
+  diagnosisDescription String?
+  treatmentPlan        String?
+  price                Float?
+  description          String?
+
+  case   Case?   @relation(fields: [caseId], references: [id])
+  caseId String?
 }
 
 model Disease {
-  id              String        @id @default(uuid())
-  name            String        @unique
-  prom            Prom?         @relation
-  promId          String        @default("default-prom-id")    
-  Case            Case[]
-  ClinicScore     ClinicScore[]
+  id          String        @id @default(uuid())
+  name        String        @unique
+  prom        Prom?         @relation
+  promId      String        @default("default-prom-id")
+  description String?
+  Case        Case[]
+  ClinicScore ClinicScore[]
 }
 
 model Prom {
-  id                    String          @id @default(uuid())
-  disease               Disease?        @relation(fields: [diseaseId], references: [id])
-  diseaseId             String         @unique
-  name                  String
-  questions             Json
-  promResponses         PromResponse[]
+  id            String         @id @default(uuid())
+  disease       Disease?       @relation(fields: [diseaseId], references: [id])
+  diseaseId     String         @unique
+  name          String
+  questions     Json
+  promResponses PromResponse[]
 }
 
 model PromResponse {
-  id                    String          @id @default(uuid())
-  case                  Case?           @relation(fields: [caseId], references: [id],  onDelete: Cascade)
-  caseId                String?         
-  patient               Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  patientId             String
-  clinician             Clinician       @relation(fields: [clinicianId], references: [id], onDelete: Cascade)
-  clinicianId           String
-  prom                  Prom            @relation(fields: [promId], references: [id], onDelete: Cascade)
-  promId                String
-  responses             Json
-  totalScore            Int             @default(0)
-  submittedAt           DateTime        @default(now())
+  id          String    @id @default(uuid())
+  case        Case?     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  caseId      String?
+  patient     Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  patientId   String
+  clinician   Clinician @relation(fields: [clinicianId], references: [id], onDelete: Cascade)
+  clinicianId String
+  prom        Prom      @relation(fields: [promId], references: [id], onDelete: Cascade)
+  promId      String
+  responses   Json
+  totalScore  Int       @default(0)
+  submittedAt DateTime  @default(now())
 
   @@unique([caseId, submittedAt])
 }

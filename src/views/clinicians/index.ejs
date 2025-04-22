@@ -1,0 +1,76 @@
+<% layout('/layout/boilerplate') %>
+
+<!--begin::Page Header-->
+<div class="app-content-header">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-sm-6">
+        <h4 class="mb-0">Clinicians</h4>
+        <p class="text-muted">List of all registered clinicians</p>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-end">
+          <li class="breadcrumb-item"><a href="#">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Clinicians</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--begin::Clinicians Table-->
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="card shadow rounded-4 p-4">
+      <h5 class="fw-semibold mb-4">All Clinicians</h5>
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Clinic</th>
+              <th>Specialization</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% clinicians.forEach(clinician => { %>
+            <tr>
+              <td><%= clinician.user.username %></td>
+              <td><%= clinician.user.email %></td>
+              <td><%= clinician.clinic?.name || 'Not assigned' %></td>
+              <td><%= clinician.specialization || 'N/A' %></td>
+              <td>
+                <% if (clinician.approved) { %>
+                <span class="badge text-bg-success">Verified</span>
+                <% } else { %>
+                <span class="badge text-bg-warning">Pending</span>
+                <% } %>
+              </td>
+              <td>
+                <% if (!clinician.approved) { %>
+                <form
+                  action="/clinicians/<%= clinician.id %>?_method=PATCH"
+                  method="POST"
+                  class="d-inline"
+                >
+                  <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="bi bi-check-circle me-1"></i> Verify
+                  </button>
+                </form>
+                <% } else { %>
+                <button type="submit" class="btn btn-sm btn-primary" disabled>
+                  <i class="bi bi-check-circle me-1"></i> Verified
+                </button>
+                <% } %>
+              </td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

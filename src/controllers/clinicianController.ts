@@ -1,17 +1,23 @@
 import { RequestHandler } from "express";
 import createHttpError from "http-errors";
 import prisma from "../util/prisma";
+import { title } from "process";
+import { assert } from "console";
+import { assertHasUser } from "../util/assertHasUser";
 
 export const getClinicians: RequestHandler = async (req, res, next) => {
     try {
+        assertHasUser(req);
+        const user = req.user; // Assuming you have a middleware that sets req.user
         const clinicians = await prisma.clinician.findMany({
             include: {
               user: true, // Include associated user details if needed
+              clinic: true
             },
           });
 
         res.locals.isIndexPage = true;
-        res.render('home', { clinicians });
+        res.render('clinicians/index', { clinicians, title: "Clinicians", user});
 
     } catch (error) {
         next(error);
@@ -83,25 +89,17 @@ interface UpdateClinicianBody {
 
 export const updateClinician: RequestHandler<UpdateClinicianParams, unknown, UpdateClinicianBody, unknown> = async (req, res, next) => {
     const clinicianId = req.params.id;
-    const { email, name } = req.body;
+    console.log("hello, im here updating someone");
 
     try {
         const updatedClinician = await prisma.clinician.update({
             where: { id: clinicianId },
             data: {
-              user: {
-                update: {
-                  email,
-                  username: name,
-                },
+                approved: true, // Set approved to true
               },
-            },
-            include: {
-              user: true, // Include associated user details
-            },
           });
 
-        res.status(200).json(updatedClinician);
+        res.status(200).redirect('/clinicians'); // Redirect to the index page after updating
 
     } catch (error) { next(error);}
 };

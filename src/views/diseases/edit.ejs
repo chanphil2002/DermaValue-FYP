@@ -1,0 +1,185 @@
+<% layout('/layout/boilerplate') %>
+
+<!--begin::App Content Header-->
+<div class="app-content-header">
+  <div class="container-fluid"></div>
+</div>
+<!--end::App Content Header-->
+
+<!--begin::App Content-->
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row g-4 mb-3">
+      <div class="col-12">
+        <!--begin::Edit Disease Card-->
+        <div class="card card-primary card-outline mb-4">
+          <!--begin::Header-->
+          <div class="card-header">
+            <div class="card-title">Edit Disease</div>
+          </div>
+          <!--end::Header-->
+
+          <!--begin::Form-->
+          <form action="/diseases/<%= disease.id %>?_method=PUT" method="POST">
+            <!--begin::Body-->
+            <div class="card-body">
+              <!-- Disease Name -->
+              <div class="mb-3">
+                <label for="diseaseName" class="form-label">Disease Name</label>
+                <input
+                  name="name"
+                  id="diseaseName"
+                  type="text"
+                  class="form-control"
+                  value="<%= disease.name %>"
+                  required
+                />
+                <div class="form-text">
+                  This will be the name of the disease.
+                </div>
+              </div>
+
+              <!-- PROM Name -->
+              <div class="mb-3">
+                <label for="promName" class="form-label">PROM Name</label>
+                <input
+                  name="promName"
+                  id="promName"
+                  type="text"
+                  class="form-control"
+                  value="<%= disease.prom?.name || '' %>"
+                  required
+                />
+                <div class="form-text">
+                  This will be the name of the PROM form.
+                </div>
+              </div>
+
+              <!-- Questions Section -->
+              <div id="questions-section">
+                <% if (disease.prom && disease.prom.questions &&
+                disease.prom.questions.length) { %> <%
+                disease.prom.questions.forEach((q, index) => { %>
+                <div class="mb-3 question-set d-flex align-items-center">
+                  <label class="form-label mb-0 me-2"
+                    >Question <%= index + 1 %></label
+                  >
+                  <input
+                    type="text"
+                    name="questions[]"
+                    class="form-control me-2"
+                    value="<%= q.question %>"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm remove-question-set"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <% }); %> <% } else { %>
+                <div class="mb-3 question-set d-flex align-items-center">
+                  <label class="form-label mb-0 me-2">Question 1</label>
+                  <input
+                    type="text"
+                    name="questions[]"
+                    class="form-control me-2"
+                    placeholder="Enter question"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm remove-question-set"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <% } %>
+              </div>
+
+              <!-- Add Question Button -->
+              <div class="d-flex justify-content-end">
+                <button
+                  type="button"
+                  id="add-question-set"
+                  class="btn btn-success btn-sm mb-3"
+                >
+                  Add Another Question Set
+                </button>
+              </div>
+            </div>
+            <!--end::Body-->
+
+            <!--begin::Footer-->
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">
+                Save Changes
+              </button>
+              <a href="/diseases" class="btn btn-secondary">Cancel</a>
+            </div>
+            <!--end::Footer-->
+          </form>
+          <!--end::Form-->
+        </div>
+        <!--end::Edit Disease Card-->
+      </div>
+    </div>
+  </div>
+</div>
+<!--end::App Content-->
+
+<script>
+  document
+    .getElementById("add-question-set")
+    .addEventListener("click", function () {
+      const questionSetsContainer =
+        document.getElementById("questions-section");
+      const index = questionSetsContainer.children.length + 1;
+
+      const newSet = document.createElement("div");
+      newSet.classList.add(
+        "mb-3",
+        "question-set",
+        "d-flex",
+        "align-items-center"
+      );
+
+      const label = document.createElement("label");
+      label.classList.add("form-label", "mb-0", "me-2");
+      label.textContent = `Question ${index}`;
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.name = "questions[]";
+      input.classList.add("form-control", "me-2");
+      input.placeholder = "Enter question";
+      input.required = true;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.classList.add(
+        "btn",
+        "btn-danger",
+        "btn-sm",
+        "remove-question-set"
+      );
+      removeBtn.textContent = "Remove";
+
+      removeBtn.addEventListener("click", () => {
+        questionSetsContainer.removeChild(newSet);
+      });
+
+      newSet.appendChild(label);
+      newSet.appendChild(input);
+      newSet.appendChild(removeBtn);
+
+      questionSetsContainer.appendChild(newSet);
+    });
+
+  document.addEventListener("click", function (e) {
+    if (e.target && e.target.classList.contains("remove-question-set")) {
+      e.target.closest(".question-set").remove();
+    }
+  });
+</script>
