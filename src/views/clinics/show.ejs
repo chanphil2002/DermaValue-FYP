@@ -26,6 +26,22 @@
 <!--begin::Clinic Content Layout-->
 <div class="app-content">
   <div class="container-fluid">
+    <!--begin::Row-->
+    <% if (!user) { %>
+    <div class="row g-4 mb-3">
+      <div class="col-12">
+        <div
+          class="callout callout-info d-flex justify-content-between align-items-center mb-3"
+        >
+          <!-- Prompt for Login -->
+          <p class="mb-0">
+            Login or Register to Start Booking Appointment Now!
+          </p>
+        </div>
+      </div>
+    </div>
+    <% } %>
+    <!--begin::Row-->
     <div class="row g-4">
       <!-- Left Column: Clinic Info Card -->
       <div class="col-lg-5 col-md-12">

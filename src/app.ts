@@ -37,6 +37,15 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(methodOverride("_method"));
+
+app.use(session({
+  secret: "yourSuperSecretKey",
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }
+}));
+app.use(flash());
+
 app.use(morgan((tokens, req, res) => {
     // Skip logging for static files like .css, .js, .png, etc.
     if (req.url.match(/\.(css|js|png|jpg|jpeg|gif|svg)$/)) {
@@ -55,6 +64,12 @@ app.use(setOriginalUrl);
 
 // Override Express's default query parser with `qs`
 app.set("query parser", (str: string) => qs.parse(str));
+
+app.use((req, res, next) => {
+  res.locals.messages = req.flash();
+  console.log("Flash messages:", res.locals.messages);
+  next();
+});
 
 // Router
 app.use("/", authRouter);

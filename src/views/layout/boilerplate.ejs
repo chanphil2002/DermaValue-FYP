@@ -75,6 +75,33 @@
       href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
     />
     <link rel="stylesheet" href="/css/theme.bundle.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
+    />
+    <style>
+      #toast-container > div {
+        background-color: #2c2c2c !important;
+        color: #f1f1f1 !important;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+      }
+
+      #toast-container > div.toast-success {
+        background-color: #1e7e34 !important;
+      }
+
+      #toast-container > div.toast-error {
+        background-color: #b02a37 !important;
+      }
+
+      #toast-container > div.toast-info {
+        background-color: #0c5460 !important;
+      }
+
+      #toast-container > div.toast-warning {
+        background-color: #856404 !important;
+      }
+    </style>
   </head>
   <!--end::Head-->
   <!--begin::Body-->
@@ -102,7 +129,7 @@
       else if (user.role === 'PATIENT') { %> <%-
       include('../partials/sidebar-patient'); %> <% } %> <% } else { %>
       <!-- Public Navbar (For Non-Logged-in Users) -->
-      <%- include('../partials/navbar-public'); %> <% } %>
+      <%- include('../partials/sidebar-public'); %> <% } %>
 
       <!--begin::App Main-->
       <main class="app-main"><%- body %></main>
@@ -376,6 +403,32 @@
     <!-- Flatpickr JS -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <% if (messages.success && messages.success.length > 0) { %>
+    <script>
+      toastr.options = {
+        closeButton: true, // Adds a close button to the notification
+        progressBar: true, // Adds a progress bar
+        positionClass: "toast-top-right", // Position of the toast
+        timeOut: "5000", // Duration before the toast disappears (5000ms = 5 seconds)
+        extendedTimeOut: "1000", // Duration the toast stays visible after user interaction
+      };
+      toastr.success("<%= messages.success[0] %>");
+    </script>
+    <% } %> <% if (messages.error && messages.error.length > 0) { %>
+    <script>
+      toastr.options = {
+        closeButton: true,
+        progressBar: true,
+        positionClass: "toast-top-right",
+        timeOut: "5000",
+        extendedTimeOut: "1000",
+      };
+      toastr.error("<%= messages.error[0] %>");
+    </script>
+    <% } %>
     <!--end::Script-->
   </body>
   <!--end::Body-->

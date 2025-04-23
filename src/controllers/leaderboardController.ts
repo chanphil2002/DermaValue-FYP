@@ -4,7 +4,7 @@ import { assertHasUser } from '../util/assertHasUser';
 
 export const leaderboard: RequestHandler = async (req, res, next) => {
   try {
-    assertHasUser(req); // Ensure the user is authenticated
+    assertHasUser(req, true); // Ensure the user is authenticated
     const user = req.user; // Get the authenticated user from the request
     // Fetch all clinic scores along with associated clinic and disease
     const clinicScores = await prisma.clinicScore.findMany({

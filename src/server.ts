@@ -14,7 +14,7 @@ prisma.$connect()
 
     // ✅ Start the server only after Prisma connects successfully
     app.listen(port, () => {
-      console.log(`🚀 [Server]: Running at http://localhost:${port}`);
+      console.log(`🚀 [Server]: Running at http://localhost:${port}/clinics`);
     });
   })
   .catch((error: any) => {

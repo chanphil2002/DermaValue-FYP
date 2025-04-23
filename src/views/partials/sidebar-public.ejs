@@ -3,7 +3,7 @@
   <!--begin::Sidebar Brand-->
   <div class="sidebar-brand">
     <!--begin::Brand Link-->
-    <a href="/cases" class="brand-link">
+    <a href="/clinics" class="brand-link">
       <!--begin::Brand Image-->
       <img
         src="/assets/img/AdminLTELogo.png"
@@ -30,30 +30,11 @@
       >
         <li class="nav-item">
           <a
-            href="/cases"
+            href="/clinics"
             class="nav-link <%= (originalUrl === '/cases' || originalUrl === '/cases/' ? 'active' : '') %>"
           >
             <i class="nav-icon bi bi-palette"></i>
-            <p>Cases</p>
-          </a>
-        </li>
-        <li class="nav-item">
-          <% const clinicUrl = '/clinics/' + user.clinicId; %>
-          <a
-            href="/clinics/<%= user.clinicId %>"
-            class="nav-link <%= originalUrl === clinicUrl ? 'active' : '' %>"
-          >
-            <i class="nav-icon bi bi-palette"></i>
-            <p>My Clinic</p>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/clinics"
-            class="nav-link <%= (originalUrl === '/clinics' || originalUrl === '/clinics/' ? 'active' : '') %>"
-          >
-            <i class="nav-icon bi bi-palette"></i>
-            <p>Clinics</p>
+            <p>All Clinics</p>
           </a>
         </li>
         <li class="nav-item">

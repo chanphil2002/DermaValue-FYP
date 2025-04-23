@@ -9,11 +9,13 @@ const router = express.Router();
 
 // router.post("/login/:role", clearAuthCookie, authController.loginUser);
 
+router.get("/", (req, res) => {
+    return res.redirect("/clinics");
+  });
+  
 router.get("/login", clearAuthCookie, authController.getLoginPage);
 
 router.post("/login", clearAuthCookie, authController.loginUser);
-
-router.get("/", authenticateJWT, authController.getDashboard);
 
 // router.get("/register/:role", clearAuthCookie, authController.getRegisterPage);
 

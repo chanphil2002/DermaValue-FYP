@@ -51,11 +51,9 @@ export const createNewCollaborator: RequestHandler = async (req, res, next) => {
     const { clinicianIds } = req.body; // Array of clinician IDs to invite
     const loggedInUserId = req.user.clinicianId; // Authenticated clinician
 
-    console.log(caseId);
-    console.log(clinicianIds);
-
     if (!caseId || !clinicianIds || !Array.isArray(clinicianIds) || clinicianIds.length === 0) {
-      throw createHttpError(400, "Case ID and clinician IDs are required");
+      req.flash("error", "Case ID and clinician IDs are required.");
+      return res.status(400).redirect(`/cases/${caseId}`);
     }
 
     // Find the case and ensure the logged-in clinician is the primary clinician
@@ -65,11 +63,13 @@ export const createNewCollaborator: RequestHandler = async (req, res, next) => {
     });
 
     if (!caseData) {
-      throw createHttpError(404, "Case not found");
+      req.flash("error", "Case not found");
+      return res.status(404).redirect("/cases");
     }
 
     if (caseData.primaryClinicianId !== loggedInUserId) {
-      throw createHttpError(403, "Only the primary clinician can invite MDT members");
+      req.flash("error", "Only the primary clinician can invite MDT members");
+      return res.status(403).redirect(`/cases/${caseId}`);
     }
 
     // Filter out already invited clinicians
@@ -77,7 +77,8 @@ export const createNewCollaborator: RequestHandler = async (req, res, next) => {
     const newClinicians = clinicianIds.filter(id => !existingMDTClinicianIds.includes(id));
 
     if (newClinicians.length === 0) {
-      throw createHttpError(400, "All selected clinicians are already part of the MDT");
+      req.flash("error", "All selected clinicians are already part of the MDT");
+      return res.status(400).redirect(`/cases/${caseId}`);
     }
 
     // Add clinicians to MDT
@@ -120,7 +121,8 @@ export const getMDTMembers: RequestHandler = async (req, res, next) => {
     });
 
     if (!caseData) {
-      throw createHttpError(404, "Case not found");
+      req.flash("error", "Case not found");
+      return res.status(404).redirect("/cases");
     }
 
     res.status(200).json({

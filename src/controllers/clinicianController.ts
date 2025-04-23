@@ -17,7 +17,7 @@ export const getClinicians: RequestHandler = async (req, res, next) => {
           });
 
         res.locals.isIndexPage = true;
-        res.render('clinicians/index', { clinicians, title: "Clinicians", user});
+        res.render('clinicians/index', { clinicians, title: "Clinicians", user, messages: res.locals.messages });
 
     } catch (error) {
         next(error);
@@ -35,7 +35,10 @@ export const getClinician: RequestHandler = async (req, res, next) => {
             },
         });
 
-        if(!clinician){ throw createHttpError(404, "Clinician not found"); }
+        if (!clinician) {
+            res.status(404).json({ error: "Clinician not found" });
+            return;
+        }
 
         res.status(200).json(clinician);
 
@@ -56,7 +59,10 @@ export const createClinician: RequestHandler<unknown, unknown, CreateClinicianBo
     console.log(name);
 
     try {
-        if (!email) { throw createHttpError(400, "Email is required"); }
+        if (!email) {
+            res.status(400).json({ error: "Email is required" });
+            return;
+          }
 
         const newClinician = await prisma.clinician.create({
             data: {
@@ -99,6 +105,7 @@ export const updateClinician: RequestHandler<UpdateClinicianParams, unknown, Upd
               },
           });
 
+        req.flash('success', 'Clinician updated successfully!');
         res.status(200).redirect('/clinicians'); // Redirect to the index page after updating
 
     } catch (error) { next(error);}

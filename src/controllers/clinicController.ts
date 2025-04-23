@@ -4,6 +4,7 @@ import prisma from "../util/prisma";
 import { assert } from "console";
 import { assertHasUser } from "../util/assertHasUser";
 import { uploadClinicImage, uploadImage } from '../util/cloudinary/index';
+import { title } from "process";
 
 
 export const showNewClinicPage: RequestHandler = (req, res) => {
@@ -19,7 +20,7 @@ export const showIndexPage: RequestHandler = async (req, res) => {
 
   const clinics = await prisma.clinic.findMany();
 
-  res.render("clinics/index", { clinics, user });
+  res.render("clinics/index", { clinics, user, messages: res.locals.messages, title: "Clinics" });
 }
 
 // **Create a new clinic**
@@ -31,7 +32,8 @@ export const createClinic: RequestHandler = async (req, res, next) => {
     console.log(name, location);
 
     if (!name || !location ) {
-      throw createHttpError(400, "name and location are required");
+      req.flash("error", "Name and location are required.");
+      return res.status(400).redirect("/clinics/new");
     }
 
     const clinic = await prisma.clinic.create({
@@ -59,7 +61,8 @@ export const createClinic: RequestHandler = async (req, res, next) => {
       } catch (error) {
         // In case of an error while uploading, handle it properly
         await prisma.clinic.delete({ where: { id: clinic.id } }); // Rollback clinic creation if upload fails
-        throw createHttpError(500, "Error uploading clinic image");
+        req.flash("error", "Failed to upload clinic image.");
+        return res.status(500).redirect("/clinics/new");
       }
     } else {
       // No image uploaded, set a default image URL
@@ -74,6 +77,7 @@ export const createClinic: RequestHandler = async (req, res, next) => {
       console.log("No image uploaded. Default image URL set:", defaultImageUrl);
     }
 
+    req.flash("success", "Clinic created successfully!");
     res.status(201).redirect("/clinics/all");
   } catch (error) {
     next(error);
@@ -83,11 +87,11 @@ export const createClinic: RequestHandler = async (req, res, next) => {
 // **Get all clinics**
 export const getClinics: RequestHandler = async (req, res, next) => {
   try {
-    assertHasUser(req);
-    const user = req.user;
+    assertHasUser(req, true);
+    const user = req.user || null;
 
     const clinics = await prisma.clinic.findMany();
-    res.render('clinics/index', { clinics, user });
+    res.render('clinics/index', { clinics, user, title: "Clinics" });
   } catch (error) {
     next(error);
   }
@@ -96,8 +100,8 @@ export const getClinics: RequestHandler = async (req, res, next) => {
 // **Get a single clinic by ID**
 export const getClinicById: RequestHandler = async (req, res, next) => {
   try {
-    assertHasUser(req);
-    const user = req.user;
+    assertHasUser(req, true);
+    const user = req.user || null;
     const { id } = req.params;
 
     const clinic = await prisma.clinic.findUnique({
@@ -112,7 +116,8 @@ export const getClinicById: RequestHandler = async (req, res, next) => {
     console.log(clinic)
 
     if (!clinic) {
-      throw createHttpError(404, "Clinic not found");
+      req.flash("error", "Clinic not found.");
+      return res.status(404).redirect("/clinics");
     }
 
     res.status(200).render("clinics/show", { clinic, title: "Clinic Details", user });
@@ -133,7 +138,8 @@ export const updateClinic: RequestHandler = async (req, res, next) => {
     });
 
     if (!updatedClinic) {
-      throw createHttpError(404, "Clinic not found");
+      req.flash("error", "Clinic not found.");
+      return res.status(404).redirect("/clinics");
     }
 
     res.status(200).json(updatedClinic);

@@ -18,7 +18,7 @@ export const getLoginPage: RequestHandler = (req, res) => {
 
   // res.render("auth/login", { title: role.charAt(0).toUpperCase() + role.slice(1), loginPath } ); 
 
-  res.render("auth/login", { title: "Login" }); // Render the login page
+  res.render("auth/login", { title: "Login", messages: res.locals.messages}); // Render the login page
 }
 
 export const loginUser: RequestHandler = async (req, res, next) => {
@@ -28,7 +28,8 @@ export const loginUser: RequestHandler = async (req, res, next) => {
     const roleTitle = role.toUpperCase(); // Convert role to uppercase for comparison
 
     if (!email || !password || !role) {
-      throw createHttpError(400, "Email and password are required");
+      req.flash('error', 'Email and password are required!');
+      res.redirect("/login"); // Redirect to the login page
     }
 
     // Fetch the user and include role-specific data
@@ -40,10 +41,16 @@ export const loginUser: RequestHandler = async (req, res, next) => {
       },
     });
 
-    if (!user || user.role !== roleTitle) throw createHttpError(401, "Invalid credentials");
+    if (!user || user.role !== roleTitle) {
+      req.flash('error', 'Invalid Credentials!');
+      return res.status(401).redirect("/login"); // Redirect to the login page
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) throw createHttpError(401, "Invalid credentials");
+    if (!isMatch) { 
+      req.flash('error', 'Invalid Credentials!');
+      return res.status(401).redirect("/login"); // Redirect to the login page
+    }
 
     // **Clinician Login Requires Approval**
     if (roleTitle === $Enums.UserRole.CLINICIAN) {
@@ -51,8 +58,14 @@ export const loginUser: RequestHandler = async (req, res, next) => {
         where: { userId: user.id },
       });
 
-      if (!clinician) throw createHttpError(404, "Clinician profile not found");
-      if (!clinician.approved) throw createHttpError(403, "Clinician not approved by admin");
+      if (!clinician) {
+        req.flash('error', 'Clinician Profile not Found!');
+        return res.status(404).redirect("/login"); // Redirect to the login page
+      }
+      if (!clinician.approved) {
+        req.flash('error', 'Clinician not Approved by Admin!');
+        return res.status(403).redirect("/login"); // Redirect to the login page
+      }
     }
 
     // Construct the JWT payload dynamically based on the role
@@ -81,7 +94,21 @@ export const loginUser: RequestHandler = async (req, res, next) => {
       maxAge: 60 * 60 * 1000, // Cookie expires in 1 hour
     });
 
-    res.redirect('/'); // Redirect to the patient's dashboard after successful login
+    if (roleTitle === $Enums.UserRole.ADMIN) {
+      req.flash('success', 'Successfully login!');
+      console.log("Session before redirect:", req.session);
+      res.redirect('/clinicians');
+    } else if (roleTitle === $Enums.UserRole.CLINICIAN) {
+      req.flash('success', 'Successfully login!');
+      console.log("Session before redirect:", req.session);
+      res.redirect('/cases');
+    } else if (roleTitle === $Enums.UserRole.PATIENT) {
+      req.flash('success', 'Successfully login!');
+      console.log("Session before redirect:", req.session);
+      res.redirect('/cases');
+    } else {
+      res.redirect('/'); // fallback
+    }
 
   } catch (error) {
     next(error);
@@ -131,17 +158,20 @@ export const registerUser: RequestHandler = async (req, res, next) => {
     const { username, email, password, title, clinicId, medicalHistory } = req.body;
 
     if (!username || !email || !password || !roleTitle) {
-      throw createHttpError(400, "All fields are required");
+      req.flash("error", "All fields are required!");
+      return res.redirect("/register/"+ roleTitle); // Redirect to the register page with the role
     }
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
 
     if (existingUser) {
-      throw createHttpError(409, "User already exists");
+      req.flash("error", "User already exists!");
+      return res.redirect("/register/"+ roleTitle); // Redirect to the register page with the role
     }
 
     if (roleTitle === $Enums.UserRole.CLINICIAN && !clinicId) {
-      throw createHttpError(400, "Clinic ID is required for clinicians");
+      req.flash("error", "You need to attach a Clinic before proceeding.");
+      return res.redirect("/register/"+ roleTitle); // Redirect to the register page with the role
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -211,6 +241,10 @@ export const registerUser: RequestHandler = async (req, res, next) => {
       });
     }
 
+    if (roleTitle === $Enums.UserRole.CLINICIAN) {
+      req.flash('success', 'Clinician registered successfully! Please wait for admin approval.');
+      res.redirect("/login"); // Redirect to the login page
+    }
     res.redirect("/");
 
   } catch (error) {
@@ -221,6 +255,7 @@ export const registerUser: RequestHandler = async (req, res, next) => {
 
 export const logout: RequestHandler = (req, res, next) => {
   try {
+    req.flash('success', 'Logout Successfully!');
     res.redirect("/login");  // Redirect to the login page
 
   } catch (error) {

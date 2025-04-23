@@ -49,7 +49,8 @@ export const createNewMDTNote: RequestHandler = async (req, res, next) => {
     const loggedInClinicianId = req.user.clinicianId; // Authenticated clinician
 
     if (!id || !note) {
-      throw createHttpError(400, "Case ID and note are required");
+      req.flash("error", "Case ID and note are required");
+      return res.status(400).redirect("/cases");
     }
 
     // Check if the clinician is part of the MDT
@@ -63,7 +64,8 @@ export const createNewMDTNote: RequestHandler = async (req, res, next) => {
     });
 
     if (!caseData) {
-      throw createHttpError(404, "Case not found");
+      req.flash("error", "Case not found");
+      return res.status(400).redirect("/cases");
     }
 
     const isAuthorizedClinician =
@@ -71,11 +73,13 @@ export const createNewMDTNote: RequestHandler = async (req, res, next) => {
       caseData.MDTInvite.some(mdt => mdt.clinicianId === loggedInClinicianId);
 
     if (!isAuthorizedClinician) {
-      throw createHttpError(403, "You are not authorized to log notes for this case");
+      req.flash("error", "You are not authorized to log notes for this case");
+      return res.status(403).redirect(`/cases/${id}`);
     }
 
     if (!loggedInClinicianId) {
-    throw createHttpError(400, "Clinician ID is required to log an MDT note");
+      req.flash("error", "Clinician ID is required to log an MDT note");
+      return res.status(400).redirect(`/cases/${id}`);
     }
     
     // Add the note
@@ -114,7 +118,8 @@ export const getCaseNotes: RequestHandler = async (req, res, next) => {
     });
 
     if (!caseNotes.length) {
-      throw createHttpError(404, "No notes found for this case");
+      req.flash("error", "No notes found for this case");
+      return res.status(404).redirect(`/cases/${caseId}`);
     }
 
     res.status(200).json({

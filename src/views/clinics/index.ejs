@@ -5,9 +5,9 @@
     <div class="row">
       <div class="d-flex align-items-center mb-4" style="gap: 1rem">
         <h4 class="mb-0">All Clinics</h4>
-        <% if (user.role === 'ADMIN') { %>
+        <% if (user) { if (user.role === 'ADMIN') { %>
         <a href="/clinics/new" class="btn btn-success">Add Clinic</a>
-        <% } %>
+        <% } } %>
       </div>
       <!-- <div class="col-sm-6">
         <ol class="breadcrumb float-sm-end">
@@ -22,6 +22,22 @@
 <!--begin::App Content-->
 <div class="app-content">
   <div class="container-fluid mx-1">
+    <!--begin::Row-->
+    <% if (!user) { %>
+    <div class="row g-4 mb-3">
+      <div class="col-12">
+        <div
+          class="callout callout-info d-flex justify-content-between align-items-center mb-3"
+        >
+          <!-- Prompt for Login -->
+          <p class="mb-0">
+            Login or Register to Start Booking Appointment Now!
+          </p>
+        </div>
+      </div>
+    </div>
+    <% } %>
+    <!--begin::Row-->
     <!-- Clinics List -->
     <div class="row g-4">
       <% clinics.forEach(clinic => { %>
@@ -57,14 +73,14 @@
 
             <!-- Action Buttons -->
             <div class="d-grid gap-2 mt-auto">
-              <% if (user.role === 'PATIENT') { %>
+              <% if (user) { if (user.role === 'PATIENT') { %>
               <a
                 href="/cases/new/<%= clinic.id %>"
                 class="btn btn-primary w-100 py-2 rounded-pill"
               >
                 <i class="bi bi-calendar-check me-2"></i>Book Appointment Now
               </a>
-              <% } %>
+              <% } } %>
               <a
                 href="/clinics/<%= clinic.id %>"
                 class="btn btn-outline-secondary border-secondary w-100 py-2 rounded-pill"

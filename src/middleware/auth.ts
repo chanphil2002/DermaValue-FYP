@@ -5,18 +5,29 @@ import { $Enums } from "@prisma/client";
 
 // Middleware to verify JWT and extract user data
 export const authenticateJWT: RequestHandler = (req, res, next) => {
+  const publicRoutes = ["/", "/leaderboard", "/clinics"];
+
+  // Allow public routes without requiring login
+  const isPublicRoute = publicRoutes.some(route => req.originalUrl.startsWith(route));
+
   try {
-    // const token = req.headers.authorization?.split(" ")[1];
     const token = req.cookies.token;
 
-    if (!token) return res.status(401).redirect("/login");
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+      req.user = decoded;
+    } else if (!isPublicRoute) {
+      // If not a public route and no token, redirect to login
+      return res.status(401).redirect("/login");
+    }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
-
-    req.user = decoded;
-
-    next();
+    next(); // Always continue
   } catch (error) {
+    // Token is invalid or expired
+    if (isPublicRoute) {
+      return next(); // Still allow guest access
+    }
+
     next(createHttpError(401, "Invalid or expired token"));
   }
 };

@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <!--begin::Head-->
   <head>
@@ -58,13 +58,38 @@
       integrity="sha256-+uGLJmmTKOqBr+2E6KDYs/NRsHxSkONXFHUL0fy2O/4="
       crossorigin="anonymous"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
+    />
+    <style>
+      #toast-container > div {
+        background-color: #2c2c2c !important;
+        color: #f1f1f1 !important;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+      }
+
+      #toast-container > div.toast-success {
+        background-color: #1e7e34 !important;
+      }
+
+      #toast-container > div.toast-error {
+        background-color: #b02a37 !important;
+      }
+
+      #toast-container > div.toast-info {
+        background-color: #0c5460 !important;
+      }
+
+      #toast-container > div.toast-warning {
+        background-color: #856404 !important;
+      }
+    </style>
   </head>
   <!--end::Head-->
   <!--begin::Body-->
   <!-- <body class="layout-fixed sidebar-expand-lg bg-body-tertiary"> -->
-    <body class='login-page bg-body-secondary'>
-    
-
+  <body class="login-page bg-body-secondary">
     <%- body %>
 
     <!--begin::Script-->
@@ -90,15 +115,18 @@
     <script src="/js/adminlte.js"></script>
     <!--end::Required Plugin(AdminLTE)--><!--begin::OverlayScrollbars Configure-->
     <script>
-      const SELECTOR_SIDEBAR_WRAPPER = '.sidebar-wrapper';
+      const SELECTOR_SIDEBAR_WRAPPER = ".sidebar-wrapper";
       const Default = {
-        scrollbarTheme: 'os-theme-light',
-        scrollbarAutoHide: 'leave',
+        scrollbarTheme: "os-theme-light",
+        scrollbarAutoHide: "leave",
         scrollbarClickScroll: true,
       };
-      document.addEventListener('DOMContentLoaded', function () {
+      document.addEventListener("DOMContentLoaded", function () {
         const sidebarWrapper = document.querySelector(SELECTOR_SIDEBAR_WRAPPER);
-        if (sidebarWrapper && typeof OverlayScrollbarsGlobal?.OverlayScrollbars !== 'undefined') {
+        if (
+          sidebarWrapper &&
+          typeof OverlayScrollbarsGlobal?.OverlayScrollbars !== "undefined"
+        ) {
           OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {
             scrollbars: {
               theme: Default.scrollbarTheme,
@@ -119,17 +147,20 @@
     ></script>
     <!-- sortablejs -->
     <script>
-      const connectedSortables = document.querySelectorAll('.connectedSortable');
+      const connectedSortables =
+        document.querySelectorAll(".connectedSortable");
       connectedSortables.forEach((connectedSortable) => {
         let sortable = new Sortable(connectedSortable, {
-          group: 'shared',
-          handle: '.card-header',
+          group: "shared",
+          handle: ".card-header",
         });
       });
 
-      const cardHeaders = document.querySelectorAll('.connectedSortable .card-header');
+      const cardHeaders = document.querySelectorAll(
+        ".connectedSortable .card-header"
+      );
       cardHeaders.forEach((cardHeader) => {
-        cardHeader.style.cursor = 'move';
+        cardHeader.style.cursor = "move";
       });
     </script>
     <!-- apexcharts -->
@@ -147,17 +178,17 @@
       const sales_chart_options = {
         series: [
           {
-            name: 'Digital Goods',
+            name: "Digital Goods",
             data: [28, 48, 40, 19, 86, 27, 90],
           },
           {
-            name: 'Electronics',
+            name: "Electronics",
             data: [65, 59, 80, 81, 56, 55, 40],
           },
         ],
         chart: {
           height: 300,
-          type: 'area',
+          type: "area",
           toolbar: {
             show: false,
           },
@@ -165,35 +196,35 @@
         legend: {
           show: false,
         },
-        colors: ['#0d6efd', '#20c997'],
+        colors: ["#0d6efd", "#20c997"],
         dataLabels: {
           enabled: false,
         },
         stroke: {
-          curve: 'smooth',
+          curve: "smooth",
         },
         xaxis: {
-          type: 'datetime',
+          type: "datetime",
           categories: [
-            '2023-01-01',
-            '2023-02-01',
-            '2023-03-01',
-            '2023-04-01',
-            '2023-05-01',
-            '2023-06-01',
-            '2023-07-01',
+            "2023-01-01",
+            "2023-02-01",
+            "2023-03-01",
+            "2023-04-01",
+            "2023-05-01",
+            "2023-06-01",
+            "2023-07-01",
           ],
         },
         tooltip: {
           x: {
-            format: 'MMMM yyyy',
+            format: "MMMM yyyy",
           },
         },
       };
 
       const sales_chart = new ApexCharts(
-        document.querySelector('#revenue-chart'),
-        sales_chart_options,
+        document.querySelector("#revenue-chart"),
+        sales_chart_options
       );
       sales_chart.render();
     </script>
@@ -226,8 +257,8 @@
 
       // World map by jsVectorMap
       const map = new jsVectorMap({
-        selector: '#world-map',
-        map: 'world',
+        selector: "#world-map",
+        map: "world",
       });
 
       // Sparkline charts
@@ -238,14 +269,14 @@
           },
         ],
         chart: {
-          type: 'area',
+          type: "area",
           height: 50,
           sparkline: {
             enabled: true,
           },
         },
         stroke: {
-          curve: 'straight',
+          curve: "straight",
         },
         fill: {
           opacity: 0.3,
@@ -253,10 +284,13 @@
         yaxis: {
           min: 0,
         },
-        colors: ['#DCE6EC'],
+        colors: ["#DCE6EC"],
       };
 
-      const sparkline1 = new ApexCharts(document.querySelector('#sparkline-1'), option_sparkline1);
+      const sparkline1 = new ApexCharts(
+        document.querySelector("#sparkline-1"),
+        option_sparkline1
+      );
       sparkline1.render();
 
       const option_sparkline2 = {
@@ -266,14 +300,14 @@
           },
         ],
         chart: {
-          type: 'area',
+          type: "area",
           height: 50,
           sparkline: {
             enabled: true,
           },
         },
         stroke: {
-          curve: 'straight',
+          curve: "straight",
         },
         fill: {
           opacity: 0.3,
@@ -281,10 +315,13 @@
         yaxis: {
           min: 0,
         },
-        colors: ['#DCE6EC'],
+        colors: ["#DCE6EC"],
       };
 
-      const sparkline2 = new ApexCharts(document.querySelector('#sparkline-2'), option_sparkline2);
+      const sparkline2 = new ApexCharts(
+        document.querySelector("#sparkline-2"),
+        option_sparkline2
+      );
       sparkline2.render();
 
       const option_sparkline3 = {
@@ -294,14 +331,14 @@
           },
         ],
         chart: {
-          type: 'area',
+          type: "area",
           height: 50,
           sparkline: {
             enabled: true,
           },
         },
         stroke: {
-          curve: 'straight',
+          curve: "straight",
         },
         fill: {
           opacity: 0.3,
@@ -309,12 +346,43 @@
         yaxis: {
           min: 0,
         },
-        colors: ['#DCE6EC'],
+        colors: ["#DCE6EC"],
       };
 
-      const sparkline3 = new ApexCharts(document.querySelector('#sparkline-3'), option_sparkline3);
+      const sparkline3 = new ApexCharts(
+        document.querySelector("#sparkline-3"),
+        option_sparkline3
+      );
       sparkline3.render();
     </script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <% if (messages.success && messages.success.length > 0) { %>
+    <script>
+      toastr.options = {
+        closeButton: true, // Adds a close button to the notification
+        progressBar: true, // Adds a progress bar
+        positionClass: "toast-top-right", // Position of the toast
+        timeOut: "5000", // Duration before the toast disappears (5000ms = 5 seconds)
+        extendedTimeOut: "1000", // Duration the toast stays visible after user interaction
+      };
+      toastr.success("<%= messages.success[0] %>");
+    </script>
+    <% } %> <% if (messages.error && messages.error.length > 0) { %>
+    <script>
+      toastr.options = {
+        closeButton: true,
+        progressBar: true,
+        positionClass: "toast-top-right",
+        timeOut: "5000",
+        extendedTimeOut: "1000",
+      };
+      toastr.error("<%= messages.error[0] %>");
+    </script>
+    <% } %>
+    <!--end::Script-->
     <!--end::Script-->
   </body>
   <!--end::Body-->

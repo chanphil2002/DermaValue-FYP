@@ -3,7 +3,7 @@
   <!--begin::Sidebar Brand-->
   <div class="sidebar-brand">
     <!--begin::Brand Link-->
-    <a href="/" class="brand-link">
+    <a href="/cases" class="brand-link">
       <!--begin::Brand Image-->
       <img
         src="/assets/img/AdminLTELogo.png"
@@ -28,6 +28,15 @@
         role="menu"
         data-accordion="false"
       >
+        <li class="nav-item">
+          <a
+            href="/cases"
+            class="nav-link <%= (originalUrl === '/cases' || originalUrl === '/cases/' ? 'active' : '') %>"
+          >
+            <i class="nav-icon bi bi-palette"></i>
+            <p>My Cases</p>
+          </a>
+        </li>
         <!-- <li class="nav-item menu-open">             -->
         <li class="nav-item">
           <a
@@ -36,15 +45,6 @@
           >
             <i class="nav-icon bi bi-speedometer"></i>
             <p>Clinics</p>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            href="/cases"
-            class="nav-link <%= (originalUrl === '/cases' || originalUrl === '/cases/' ? 'active' : '') %>"
-          >
-            <i class="nav-icon bi bi-palette"></i>
-            <p>All Cases</p>
           </a>
         </li>
         <li class="nav-item menu">

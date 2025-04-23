@@ -15,7 +15,8 @@ export const addDisease: RequestHandler = async (req, res, next) => {
         const { name } = req.body;
 
         if (!name) {
-        throw createHttpError(400, "Disease name is required.");
+            req.flash("error", "Disease name is required.");
+            return res.status(400).redirect("/diseases/new");
         }
 
         // Check if the disease already exists
@@ -24,7 +25,8 @@ export const addDisease: RequestHandler = async (req, res, next) => {
         });
 
         if (existingDisease) {
-            throw createHttpError(409, "Disease already exists.");
+            req.flash("error", "Disease already exists.");
+            return res.status(409).redirect("/diseases/new");
         }
 
         // Save new disease
@@ -139,7 +141,8 @@ export const submitNewProm: RequestHandler = async (req, res, next) => {
     
     // Validate input
     if (!name || !diseaseId || !questions || !Array.isArray(questions) || questions.length === 0) {
-        throw createHttpError(400, "All fields (name, diseaseId, questions) are required.");
+        req.flash("error", "All fields (name, diseaseId, questions) are required.");
+        return res.status(400).redirect("/diseases/new");
     }
 
     // Create PROM template
@@ -177,7 +180,8 @@ export const fillProm: RequestHandler = async (req, res, next) => {
         console.log("Formatted Responses:", formattedResponses);
 
         if (!loggedInUserId) {
-            throw createHttpError(401, "User ID is missing or undefined.");
+            req.flash("error", "User ID is missing or undefined.");
+            return res.status(401).redirect("/login");
         }
 
         // Check if appointment exists
@@ -194,28 +198,33 @@ export const fillProm: RequestHandler = async (req, res, next) => {
         });
 
         if (!patientCase) {
-            throw createHttpError(404, "Appointment not found");
+            req.flash("error", "Case not found");
+            return res.status(404).redirect("/cases");
         }
 
         // Check if case is already recovered
         if (patientCase.isRecovered) { 
-            throw createHttpError(400, "Cannot submit PROM - this case is already marked as recovered"); 
+            req.flash("error", "Cannot submit PROM - this case is already marked as recovered");
+            return res.status(400).redirect(`/cases/${id}`);
         }
 
         // Ensure the current user is the patient of this appointment
         if (patientCase.patientId !== loggedInUserId.toString()) {
-            throw createHttpError(403, "You are not authorized to fill this PROM");
+            req.flash("error", "You are not authorized to fill this PROM");
+            return res.status(403).redirect(`/cases/${id}`);
         }
 
         // Ensure the Case has at least one completed appointment
         if (patientCase.appointments.length === 0) {
-            throw createHttpError(400, "You can only fill PROM after at least one completed appointment");
+            req.flash("error", "You can only fill PROM after at least one completed appointment");
+            return res.redirect(`/cases/${id}/proms/new`);
         }
 
         // Ensure diagnosis is available
         const latestAppointment = patientCase.appointments[patientCase.appointments.length - 1];
         if (!latestAppointment.diagnosisDescription) {
-            throw createHttpError(400, "Diagnosis must be completed before filling PROM");
+            req.flash("error", "Diagnosis must be completed before filling PROM");
+            return res.status(404).redirect(`/cases/${id}`);
         }
 
         // Ensure no duplicate PROM submissions in the last two weeks
@@ -242,12 +251,14 @@ export const fillProm: RequestHandler = async (req, res, next) => {
         }) as PromTemplate;
 
         if (!promTemplate) {
-            throw createHttpError(404, "No PROM template found for this disease");
+            req.flash("error", "No PROM template found for this disease");
+            return res.status(404).redirect(`/cases/${id}`);
         }
 
         // Validate that all responses match the PROM questions
         if (formattedResponses.length !== promTemplate.questions.length) {
-            throw createHttpError(400, "Number of responses must match the PROM questions");
+            req.flash("error", "Number of responses must match the PROM questions");
+            return res.status(400).redirect(`/cases/${id}`);
         }
 
         let totalScore = 0;
@@ -301,6 +312,7 @@ export const fillProm: RequestHandler = async (req, res, next) => {
             }; 
         }
 
+        req.flash("success", "PROM submitted successfully!");
         res.status(201).redirect(`/cases/${id}`); // Redirect to the case page after successful submission
       
     } catch (error) {
@@ -454,14 +466,19 @@ export const calculateCaseScore = async (caseId: string, latestPromEnd: number):
         if (durationRecovered <= 0) {
             throw new Error("Invalid recovery duration");
         }
+
         
-        const caseScore = (promStart - promEnd) / totalCost * durationRecovered;
+        const rawCaseScore = (promStart - promEnd) / totalCost * durationRecovered;
+
+        const MAX_RAW_VALUE_SCORE = 0.05;
+
+        const normalizedScore = Math.min((rawCaseScore / MAX_RAW_VALUE_SCORE) * 100, 100);
 
         // Update case with the calculated score and recovery status
         const updatedCase = await prisma.case.update({
             where: { id: caseId },
             data: {
-                caseScore,
+                caseScore: normalizedScore,
                 isRecovered: true,
                 promEnd: latestPromEnd
             },
@@ -475,7 +492,7 @@ export const calculateCaseScore = async (caseId: string, latestPromEnd: number):
             }
         });
 
-        console.log(`Case score calculated and case marked as recovered for case ${caseId}: ${caseScore}`);
+        console.log(`Case score calculated and case marked as recovered for case ${caseId}: ${normalizedScore}`);
 
         return updatedCase;
 

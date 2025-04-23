@@ -16,7 +16,8 @@ export const getAllCasesByUsers: RequestHandler = async (req, res, next) => {
 
     if (user.role === "PATIENT") {
       if (!user.patientId) {
-        throw createHttpError(400, "Patient ID is required to fetch cases");
+        req.flash("error", "Patient ID is required to fetch cases.");
+        return res.status(400).redirect("/clinics");
       }
 
       cases = await prisma.case.findMany({
@@ -35,7 +36,8 @@ export const getAllCasesByUsers: RequestHandler = async (req, res, next) => {
 
     } else if (user.role === "CLINICIAN") {
       if (!user.clinicianId) {
-        throw createHttpError(400, "Clinician ID is required to fetch cases");
+        req.flash("error", "Clinician ID is required to fetch cases.");
+        return res.status(400).redirect("/clinics");
       }
 
       cases = await prisma.case.findMany({
@@ -58,7 +60,8 @@ export const getAllCasesByUsers: RequestHandler = async (req, res, next) => {
       });
 
     } else {
-      throw createHttpError(403, "Unauthorized role");
+      req.flash("error", "Unauthorized role.");
+      return res.status(403).redirect("/clinics");
     }
 
     const casesWithNewFlag = cases.map(c => ({
@@ -66,7 +69,7 @@ export const getAllCasesByUsers: RequestHandler = async (req, res, next) => {
       isNew: c.updatedAt ? c.updatedAt > oneDayAgo : false,
     }));
 
-    res.render("cases/index", { title: "Cases", cases: casesWithNewFlag, user });
+    res.render("cases/index", { title: "Cases", cases: casesWithNewFlag, user, messages: res.locals.messages});
   } catch (error) {
     next(error);
   }
@@ -81,13 +84,14 @@ export const getNewCaseForm : RequestHandler = async (req, res, next) => {
     const clinic = await prisma.clinic.findUnique({
       where: { id: clinicId },
       include: {
-        clinicians: { include: { user: true } }
-      },
+        clinicians: { include: { user: true } } 
+       },
     });
 
     // Loop through clinicians and get availability for each
     if (!clinic) {
-      throw createHttpError(404, "Clinic not found");
+      req.flash("error", "Clinic not found.");
+      return res.status(404).redirect("/clinics");
     }
 
     const diseases = await prisma.disease.findMany();
@@ -115,10 +119,12 @@ export const createCase: RequestHandler = async (req, res, next) => {
     console.log(req.body);
 
     if (!clinician || !clinic || !date) {
-      throw createHttpError(400, "All fields are required");
+      req.flash("error", "All fields are required.");
+      return res.status(400).redirect(`/clinics/${clinic}/cases/new`);
     }
     if (!patientId) {
-      throw createHttpError(400, "Patient ID is required to book an appointment");
+      req.flash("error", "Patient ID is required.");
+      return res.status(400).redirect("/dashboard");
     }
 
     // Check if the patient already has an open case for the same disease
@@ -157,6 +163,7 @@ export const createCase: RequestHandler = async (req, res, next) => {
       },
     });
 
+    req.flash('success', 'Successfully booked an appointment!');
     res.redirect(`/cases/${existingCase.id}`); // Redirect to the case details page
     
   } catch (error) {
@@ -224,10 +231,11 @@ export const readCaseById: RequestHandler = async (req, res, next) => {
     });
 
     if (!caseDetails) {
-      throw createHttpError(404, "Appointment not found");
+      req.flash("error", "Case not found");
+      return res.status(400).redirect("/cases");
     }
 
-    res.render("cases/show", { title: "Case ID", caseDetails, user });
+    res.render("cases/show", { title: "Case ID", caseDetails, user, messages: res.locals.messages });
 
   }
   catch (error) {
@@ -242,10 +250,9 @@ export const acceptOrRejectCase: RequestHandler = async (req, res, next) => {
     const loggedInUserId = req.user.id;
     const action = req.body.action;
 
-    console.log("Action:", action);
-
     if (!action || (action !== 'confirm' && action !== 'reject')) {
-      throw createHttpError(400, "Invalid action. Action must be 'confirm' or 'reject'.");
+      req.flash("error", "Invalid action. Must be 'confirm' or 'reject'.");
+      return res.redirect(`/cases/${id}`);
     }
 
     // Find the appointment and include related details
@@ -271,17 +278,20 @@ export const acceptOrRejectCase: RequestHandler = async (req, res, next) => {
     });
 
     if (!appointment) {
-      throw createHttpError(404, "Appointment not found");
+      req.flash("error", "Appointment not found");
+      return res.redirect(`/cases/${id}`);
     }
 
     // Ensure the appointment is in 'pending' status
     if (appointment.status !== $Enums.AppointmentStatus.PENDING) {
-      throw createHttpError(400, "Appointment is not in pending status");
+      req.flash("error", "Only pending appointments can be modified");
+      return res.redirect(`/cases/${id}`);
     }
 
     // Ensure the clinician is assigned to this appointment
     if (!appointment.clinician || appointment.clinician.user.id.toString() !== loggedInUserId.toString()) {
-      throw createHttpError(403, "You are not authorized to accept this appointment");
+      req.flash("error", "You are not authorized to modify this appointment");
+      return res.redirect(`/cases/${id}`);
     }
 
     // Update appointment status based on action
@@ -295,6 +305,7 @@ export const acceptOrRejectCase: RequestHandler = async (req, res, next) => {
       },
     });
 
+    req.flash("success", `Appointment ${action === 'confirm' ? 'confirmed' : 'rejected'} successfully.`);
     res.status(200).redirect(`/cases/${id}`); // Redirect to the case details page
 
   } catch (error) {
