@@ -13,6 +13,8 @@ router.get("/new", authenticateJWT, diseaseController.showNewDiseaseFormPage);
 
 router.post("/", authenticateJWT, diseaseController.createNewDisease);
 
+router.patch("/", authenticateJWT, diseaseController.updateDisease);
+
 router.get("/", authenticateJWT, diseaseController.getAllDiseases);
 
 router.route("/:id")

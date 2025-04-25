@@ -255,16 +255,21 @@
           <div class="card-header d-flex align-items-center">
             <h3 class="card-title mb-0">Appointments</h3>
 
-            <% if (user.role === "PATIENT" && !caseDetails.isRecovered) { %>
+            <% if (user.role === "PATIENT" && !caseDetails.isRecovered) { const
+            hasOngoingAppointment = caseDetails.appointments.some(app =>
+            app.status === 'PENDING' || app.status === 'CONFIRMED' ); %> <% if
+            (hasOngoingAppointment) { %>
+            <span class="text-muted ms-auto">
+              <i class="bi bi-calendar-x"></i> Appointment Pending or Confirmed
+            </span>
+            <% } else { %>
             <a
-              href="#"
+              href="/cases/<%= caseDetails.id %>/clinic/<%= caseDetails.clinicId %>/appointments/new"
               class="btn btn-sm btn-outline-primary ms-auto"
-              data-bs-toggle="modal"
-              data-bs-target="#appointmentModal"
             >
               <i class="bi bi-calendar-plus"></i> Book Appointment
             </a>
-            <% } %>
+            <% } %> <% } %>
           </div>
           <!-- /.card-header -->
 
@@ -287,7 +292,7 @@
                   <tr>
                     <td>
                       <a
-                        href="/cases/<%= caseDetails.id %>/appointments/<%= appointment.id %>"
+                        href="/cases/<%= caseDetails.id %>/clinic/<%= caseDetails.clinicId %>/appointments/<%= appointment.id %>"
                         class="text-decoration-none"
                       >
                         <%= appointment.id %>
@@ -304,7 +309,7 @@
                     </td>
                     <td>
                       <a
-                        href="/cases/<%= caseDetails.id %>/appointments/<%= appointment.id %>"
+                        href="/cases/<%= caseDetails.id %>/clinic/<%= caseDetails.clinicId %>/appointments/<%= appointment.id %>"
                         class="btn btn-sm btn-primary d-flex justify-content-center align-items-center gap-1"
                       >
                         <span>View</span>
@@ -354,8 +359,10 @@
               <% } %> <% if (user.role === "CLINICIAN" && user.id ===
               caseDetails.primaryClinician.user.id) { %>
               <a
-                href="/cases/<%= caseDetails.id %>/collaborators/new"
+                href="#"
                 class="btn btn-outline-primary btn-sm rounded-pill"
+                data-bs-toggle="modal"
+                data-bs-target="#inviteCollaboratorModal"
               >
                 Invite Collaborator
               </a>
@@ -449,7 +456,8 @@
   <!--end::Container-->
 </div>
 <!--end::App Content-->
-<%- include('../partials/appointmentModal') %>
+<%- include('../partials/appointmentModal') %> <%-
+include('../partials/inviteCollaboratorModal') %>
 
 <!-- Add this script to scroll to the bottom -->
 <script>

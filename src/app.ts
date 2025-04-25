@@ -17,7 +17,7 @@ import clinicianRouter from "./routes/clinicianRouter";
 import adminRouter from "./routes/adminRouter";
 import clinicRouter from "./routes/clinicRouter";
 import caseRouter from "./routes/cases/index";
-import appointmentRouter from "./routes/appointmentRouter";
+import appointmentRouter from "./routes/googleCalendarAuthRouter";
 import userRouter from "./routes/userRouter";
 import diseaseRouter from "./routes/diseaseRouter";
 import leaderboardRouter from "./routes/leaderboardRouter";

@@ -3,7 +3,7 @@ import createHttpError from "http-errors";
 import prisma from "../util/prisma";
 import { assert } from "console";
 import { assertHasUser } from "../util/assertHasUser";
-import { uploadClinicImage, uploadImage } from '../util/cloudinary/index';
+import { uploadClinicImage, uploadImage } from '../services/cloudinaryService';
 import { title } from "process";
 
 
@@ -29,7 +29,6 @@ export const createClinic: RequestHandler = async (req, res, next) => {
     assertHasUser(req);
     const { name, location } = req.body;
     const clinicImageFile = req.file;
-    console.log(name, location);
 
     if (!name || !location ) {
       req.flash("error", "Name and location are required.");

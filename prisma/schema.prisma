@@ -169,6 +169,11 @@ model Appointment {
   price                Float?
   description          String?
 
+  imageUrl  String? // ✅ URL of the uploaded image
+  imageId   String? // ✅ Cloudinary public_id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
   case   Case?   @relation(fields: [caseId], references: [id])
   caseId String?
 }

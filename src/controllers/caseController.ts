@@ -1,10 +1,13 @@
 import { RequestHandler } from "express";
 import createHttpError from "http-errors";
 import prisma from "../util/prisma";
-import { $Enums } from "@prisma/client";
+import { $Enums, AppointmentStatus } from "@prisma/client";
 import { assertHasUser } from "../util/assertHasUser";
-import { getOAuth2Client } from "./appointmentController";
-import { listEvents } from "../util/google-calendar";
+import { getClinicGoogleCalendarAvailability, listEvents } from "../services/googleCalendarService";
+import { uploadAppointmentImage, uploadImage } from '../services/cloudinaryService';
+import { FreeTimeSlot } from "../util/google-calendar/types";
+import { getOAuth2Client } from "../util/google-calendar/googleAuth";
+import { google } from "googleapis";
 
 export const getAllCasesByUsers: RequestHandler = async (req, res, next) => {
   try {
@@ -58,7 +61,6 @@ export const getAllCasesByUsers: RequestHandler = async (req, res, next) => {
           primaryClinician: { include: { user: true } }, // Include the primary clinician details
         },
       });
-
     } else {
       req.flash("error", "Unauthorized role.");
       return res.status(403).redirect("/clinics");
@@ -75,11 +77,11 @@ export const getAllCasesByUsers: RequestHandler = async (req, res, next) => {
   }
 }
 
-export const getNewCaseForm : RequestHandler = async (req, res, next) => {
+export const getBookNewAppointmentForm : RequestHandler = async (req, res, next) => {
   try {
     assertHasUser(req);
     const user = req.user;
-    const clinicId = req.params.clinicId; // Assuming the clinic ID is passed in the URL
+    const { clinicId } = req.params;
 
     const clinic = await prisma.clinic.findUnique({
       where: { id: clinicId },
@@ -94,77 +96,173 @@ export const getNewCaseForm : RequestHandler = async (req, res, next) => {
       return res.status(404).redirect("/clinics");
     }
 
+    if (clinic.clinicians.length === 0) {
+      req.flash("error", "No clinicians found for the selected clinic.");
+      return res.redirect("/clinics");
+    }
+
+    // Check if the user already has an active case for this clinic
+    const existingCase = await prisma.case.findFirst({
+      where: {
+        patientId: user.patientId ?? undefined,
+        clinicId: clinicId,
+        isRecovered: false, // Ensure it's an ongoing case
+      },
+      include: {
+        disease: true,
+      }
+    });
+
     const diseases = await prisma.disease.findMany();
+
+    const allAvailableSlots = await getClinicGoogleCalendarAvailability(clinic);
 
     res.render("cases/new", 
       { title: "Create Appointment", 
         user, 
         clinic, 
-        diseases
+        diseases,
+        events: allAvailableSlots,
+        existingCase
       });
   } catch (error) {
     next(error);
   }
 }
 
-export const createCase: RequestHandler = async (req, res, next) => {
+export const bookAppointment: RequestHandler = async (req, res, next) => {
   try {
     assertHasUser(req);
 
-    const { clinic, date, diseaseId, description } = req.body;
+    const { clinic, datetime, diseaseId, description } = req.body;
     const patientId = req.user.patientId; // Authenticated user
+    const image = req.file; // Image file from the form
 
-    const clinician = "274b94a4-d235-47a4-a31f-751c0ef4887a"; // Clinician ID from the form
+    // Fetch all clinicians for the clinic
+    const clinicians = await prisma.clinician.findMany({
+      where: {
+        clinicId: clinic,
+      },
+      include: {
+        user: true, // Include the user associated with the clinician
+        appointments: true, // Include appointments to check availability
+      }
+    });
 
-    console.log(req.body);
+    if (clinicians.length === 0) {
+      req.flash("error", "No clinicians available for this clinic.");
+      return res.status(400).redirect(`/clinics/${clinic}/cases/new`);
+    }
 
-    if (!clinician || !clinic || !date) {
+    const clinician = clinicians.reduce((prev, current) => {
+      const prevCaseCount = prev.appointments.filter((app) => app.status !== AppointmentStatus.COMPLETED).length;
+      const currentCaseCount = current.appointments.filter((app) => app.status !== AppointmentStatus.COMPLETED).length;
+      return prevCaseCount <= currentCaseCount ? prev : current;
+    });
+
+    if (!clinic || !datetime) {
       req.flash("error", "All fields are required.");
       return res.status(400).redirect(`/clinics/${clinic}/cases/new`);
     }
+    
     if (!patientId) {
       req.flash("error", "Patient ID is required.");
       return res.status(400).redirect("/dashboard");
     }
 
-    // Check if the patient already has an open case for the same disease
-    let existingCase = await prisma.case.findFirst({
+    // Check if the patient already has an open case for the same clinic (active case in this clinic)
+    let existingCaseForClinic = await prisma.case.findFirst({
       where: {
         patientId,
-        diseaseId,
-        clinicId: clinic,
-        isRecovered: false, // Ensure it's an ongoing case
+        clinicId: clinic, // Check within the same clinic
+        isRecovered: false, // Ensure it's not recovered
       },
     });
 
-    // If no existing case, create a new one
-    if (!existingCase) {
-      existingCase = await prisma.case.create({
+    // If no active case for the clinic, create a new case
+    if (!existingCaseForClinic) {
+      // Create a new case
+      existingCaseForClinic = await prisma.case.create({
         data: {
           patientId,
           diseaseId,
           clinicId: clinic,
           treatmentStart: new Date(),
-          primaryClinicianId: clinician, // Assigning the clinician as the primary clinician
+          primaryClinicianId: clinician.id, // Assign the clinician as the primary clinician
         },
       });
     }
 
-    // Create a new appointment using Prisma
+    // Create a new appointment for the existing case (or newly created case)
     const appointment = await prisma.appointment.create({
       data: {
         patientId,
-        clinicianId: clinician,
+        clinicianId: clinician.id,
         clinicId: clinic,
-        caseId: existingCase.id,
+        caseId: existingCaseForClinic.id, // Use the existing or new case ID
         description,
-        date: new Date(date),
+        date: new Date(datetime),
         status: $Enums.AppointmentStatus.PENDING, // Default status
       },
     });
 
+    // Upload image only after appointment is created
+    if (image) {
+      try {
+        const result = await uploadAppointmentImage(image.path, appointment.id);
+        await prisma.appointment.update({
+          where: { id: appointment.id },
+          data: {
+            imageUrl: result.optimizeUrl,
+            imageId: result.uploadResult.public_id,
+          },
+        });
+      } catch (uploadError) {
+        console.error("Image upload failed:", uploadError);
+        req.flash("warning", "Appointment created, but image upload failed.");
+      }
+    }
+
+    // Write event to the clinician's Google Calendar
+    const calendar = google.calendar("v3");
+
+    try {
+      const authClient = await getOAuth2Client(clinician.user.email); // Function to get the OAuth client for the clinician
+      console.log(clinician.user.email);
+
+      const event = {
+        summary: `Appointment with Patient ${patientId} - Disease: ${diseaseId}`,
+        location: clinic,
+        description: description,
+        start: {
+          dateTime: new Date(datetime).toISOString(), // Ensure ISO string format
+          timeZone: "Asia/Kuala_Lumpur", // Adjust timezone as needed
+        },
+        end: {
+          dateTime: new Date(new Date(datetime).getTime() + 30 * 60 * 1000).toISOString(), // 1-hour appointment
+          timeZone: "Asia/Kuala_Lumpur",
+        },
+        attendees: [{ email: clinician.user.email }], // Add clinician as an attendee
+      };
+
+      console.log("Event to be added:", event);
+
+      await calendar.events.insert({
+        auth: authClient, // Authentication client
+        calendarId: 'primary', // The calendar ID (e.g., 'primary' for the default calendar)
+        requestBody: event,  // Correct usage of requestBody instead of resource
+      });
+
+      console.log("Event added to Google Calendar");
+
+    } catch (calendarError) {
+      console.error("Error adding event to Google Calendar:", calendarError);
+      console.error("Error details:", JSON.stringify(calendarError, null, 2)); // Log the full error details
+      req.flash("warning", "Appointment created, but Google Calendar event creation failed.");
+    }
+
     req.flash('success', 'Successfully booked an appointment!');
-    res.redirect(`/cases/${existingCase.id}`); // Redirect to the case details page
+    res.redirect(`/cases/${existingCaseForClinic.id}`); // Redirect to the case details page
     
   } catch (error) {
     next(error);
@@ -235,7 +333,24 @@ export const readCaseById: RequestHandler = async (req, res, next) => {
       return res.status(400).redirect("/cases");
     }
 
-    res.render("cases/show", { title: "Case ID", caseDetails, user, messages: res.locals.messages });
+    const clinicClinicians = await prisma.clinician.findMany({
+      where: {
+        clinicId: caseDetails.clinicId,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    const existingMDTClinicianIds = caseDetails.MDTInvite.map(invite => invite.clinicianId);
+
+    const availableClinicians = clinicClinicians.filter(clinician =>
+      !existingMDTClinicianIds.includes(clinician.id)
+    );
+
+    console.log(caseDetails);
+
+    res.render("cases/show", { title: "Case ID", caseDetails, availableClinicians, user });
 
   }
   catch (error) {

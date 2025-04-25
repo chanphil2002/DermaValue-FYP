@@ -41,7 +41,7 @@
               <td><%= clinician.user.username %></td>
               <td><%= clinician.user.email %></td>
               <td><%= clinician.clinic?.name || 'Not assigned' %></td>
-              <td><%= clinician.specialization || 'N/A' %></td>
+              <td><%= clinician.title || 'N/A' %></td>
               <td>
                 <% if (clinician.approved) { %>
                 <span class="badge text-bg-success">Verified</span>

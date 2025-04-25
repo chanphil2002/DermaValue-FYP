@@ -2,24 +2,24 @@
 
 <!--begin::App Content Header-->
 <div class="app-content-header">
-    <!--begin::Container-->
-    <div class="container-fluid">
-        <h1>Upcoming Events</h1>
+  <!--begin::Container-->
+  <div class="container-fluid">
+    <h1>Upcoming Events</h1>
 
-        <% if (events && events.length > 0) { %>
-            <ul>
-              <% events.forEach(function(slot) { %>
-                <li>
-                  <strong>Start:</strong> <%= slot.start.toLocaleString() %><br>
-                  <strong>End:</strong> <%= slot.end.toLocaleString() %><br>
-                  <strong>Description:</strong> <%= slot.description %><br><br>
-                </li>
-              <% }) %>
-            </ul>
-          <% } else { %>
-            <p>No free time slots available for this month.</p>
-          <% } %>
-    </div>
-    <!--end::Container-->
+    <% if (events && events.length > 0) { %>
+    <ul>
+      <% events.forEach(function(slot) { %>
+      <li>
+        <strong>Start:</strong> <%= slot.start.toLocaleString() %><br />
+        <strong>End:</strong> <%= slot.end.toLocaleString() %><br />
+        <strong>Description:</strong> <%= slot.description %><br /><br />
+      </li>
+      <% }) %>
+    </ul>
+    <% } else { %>
+    <p>No free time slots available for this month.</p>
+    <% } %>
+  </div>
+  <!--end::Container-->
 </div>
 <!--end::App Content-->

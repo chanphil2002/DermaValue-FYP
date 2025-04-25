@@ -20,7 +20,10 @@
           <!--end::Header-->
 
           <!--begin::Form-->
-          <form action="/diseases/<%= disease.id %>?_method=PUT" method="POST">
+          <form
+            action="/diseases/<%= disease.id %>?_method=PATCH"
+            method="POST"
+          >
             <!--begin::Body-->
             <div class="card-body">
               <!-- Disease Name -->

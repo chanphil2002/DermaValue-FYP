@@ -3,7 +3,7 @@ import createHttpError from "http-errors";
 import prisma from "../util/prisma";
 import { $Enums } from "@prisma/client";
 import { assertHasUser } from "../util/assertHasUser";
-import { uploadImage } from '../util/cloudinary/index';
+import { uploadImage } from '../services/cloudinaryService';
 
 export const uploadHandler: RequestHandler = async (req, res, next) => {
     try {

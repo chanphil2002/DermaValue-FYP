@@ -6,23 +6,28 @@ import { $Enums } from "@prisma/client";
 import appointmentRouter from "./appointmentRouter";
 import noteRouter from "./noteRouter";
 import promRouter from "./promRouter";
+
+import multer from "multer";
 import collaboratorRouter from "./collaboratorRouter";
+import { storage } from "../../util/cloudinary/index";
+
+const upload = multer({ storage });
 
 const router = express.Router({ mergeParams: true });
     
 router.get("/", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT, $Enums.UserRole.CLINICIAN]),
     caseController.getAllCasesByUsers); // Get all cases for a patient
 
-router.get("/new/:clinicId", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT]),
-    caseController.getNewCaseForm); // Get new case page
+router.get("/:clinicId/new", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT]),
+    caseController.getBookNewAppointmentForm); // Get new case page
 
-router.post("/", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT]), 
-    caseController.createCase); // Create a new case
+router.post("/", upload.single('caseImageFile'), authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT]), 
+    caseController.bookAppointment); // Create a new case
 
 router.get("/:id", authenticateJWT, authorizeRole([$Enums.UserRole.PATIENT, $Enums.UserRole.CLINICIAN]), 
     caseController.readCaseById); // Get case details
 
-router.use("/:id/appointments", appointmentRouter);
+router.use("/:id/clinic/:clinicId/appointments", appointmentRouter);
 router.use("/:id/notes", noteRouter);
 router.use("/:id/proms", promRouter);
 router.use("/:id/collaborators", collaboratorRouter);

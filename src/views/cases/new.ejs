@@ -1,7 +1,6 @@
 <% layout('/layout/boilerplate') %>
 
 <style>
-  /* Hide spinner arrows in Flatpickr year and time pickers */
   .flatpickr-current-month .numInputWrapper span.arrowUp,
   .flatpickr-current-month .numInputWrapper span.arrowDown,
   .flatpickr-time .numInputWrapper span.arrowUp,
@@ -9,205 +8,273 @@
     display: none !important;
   }
 
-  /* Always show both arrows */
   .flatpickr-months .flatpickr-prev-month,
   .flatpickr-months .flatpickr-next-month {
     visibility: visible !important;
     display: block !important;
   }
 
-  /* If disabled (e.g. can't go to previous month), just reduce opacity and disable pointer */
   .flatpickr-months .flatpickr-prev-month.flatpickr-disabled {
     opacity: 0.3;
     pointer-events: none;
   }
 
-  /* Make past dates gray */
   .flatpickr-day[aria-disabled="true"] {
     background-color: #e0e0e0 !important;
     color: #9e9e9e !important;
   }
+
+  #time-slot-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 24px;
+    justify-content: flex-start;
+  }
+
+  .time-slot {
+    width: 100px;
+    height: 60px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    font-size: 16px;
+    font-weight: 500;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.06);
+    background-color: #f9f9f9;
+    transition: all 0.2s ease-in-out;
+    user-select: none;
+  }
+
+  .time-slot.available {
+    background-color: #eafaf1;
+    border-color: #6fcf97;
+    color: #2e7d32;
+  }
+
+  .time-slot.unavailable {
+    background-color: #fceeee;
+    border-color: #f44336;
+    color: #c62828;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .time-slot.available:hover {
+    box-shadow: 0 6px 10px rgba(111, 207, 151, 0.4);
+    background-color: #d2f5e1;
+  }
+
+  .time-slot.selected {
+    background-color: #2196f3;
+    color: white;
+    border-color: #1976d2;
+    box-shadow: 0 6px 12px rgba(33, 150, 243, 0.4);
+  }
 </style>
 
-<!--begin::App Content Header-->
 <div class="app-content-header">
-  <!--begin::Container-->
   <div class="container-fluid">
     <div class="row g-4 mb-3">
-      <div class="col-6">
-        <!--begin::Quick Example-->
+      <div class="col-12">
         <div class="card card-primary card-outline mb-4">
-          <!--begin::Header-->
           <div class="card-header">
             <div class="card-title">Submit New Case</div>
           </div>
-          <!--end::Header-->
-          <!--begin::Form-->
-          <form action="/cases/" method="POST">
-            <!--begin::Body-->
+
+          <form action="/cases" method="POST" enctype="multipart/form-data">
             <div class="card-body">
-              <!-- Case Name -->
-              <div class="mb-3">
-                <label for="clinicName" class="form-label">Clinic</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="clinicName"
-                  name="clinic"
-                  value="<%= clinic.name %>"
-                  disabled
-                />
-                <input type="hidden" name="clinic" value="<%= clinic.id %>" />
-                <div class="form-text">This is your selected Clinic.</div>
-              </div>
+              <div class="row">
+                <!-- LEFT COLUMN -->
+                <div class="col-12 col-lg-6">
+                  <div class="mb-3">
+                    <label for="clinicName" class="form-label">Clinic</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="clinicName"
+                      name="clinic"
+                      value="<%= clinic.name %>"
+                      disabled
+                    />
+                    <input
+                      type="hidden"
+                      name="clinic"
+                      value="<%= clinic.id %>"
+                    />
+                    <div class="form-text">This is your selected Clinic.</div>
+                  </div>
 
-              <!-- Disease Dropdown -->
-              <div class="mb-3">
-                <label for="disease" class="form-label">Disease</label>
-                <select
-                  name="diseaseId"
-                  id="disease"
-                  class="form-select"
-                  required
-                >
-                  <option disabled selected value="">
-                    -- Select Type of Disease --
-                  </option>
-                  <% diseases.forEach(disease => { %>
-                  <option value="<%= disease.id %>"><%= disease.name %></option>
-                  <% }) %>
-                </select>
-              </div>
+                  <% if (!existingCase) { %>
+                    <div class="mb-3">
+                      <label for="disease" class="form-label">Disease</label>
+                      <select class="form-select" id="disease" name="diseaseId" required>
+                        <option value="" disabled selected>- Select a Disease -</option>
+                        <% diseases.forEach(disease => { %>
+                          <option value="<%= disease.id %>"><%= disease.name %></option>
+                        <% }) %>
+                      </select>
+                    </div>
+                  <% } else { %>
+                    <div class="mb-3">
+                      <label for="disease" class="form-label">Disease</label>
+                      <select class="form-select" id="disease" name="diseaseId" disabled>
+                        <option value="<%= existingCase.diseaseId %>" selected><%= existingCase.disease.name %></option>
+                      </select>
+                    </div>
+                    <input type="hidden" name="diseaseId" value="<%= existingCase.diseaseId %>" />
+                  <% } %>
 
-              <!-- Case Description -->
-              <div class="mb-3">
-                <label for="caseDescription" class="form-label"
-                  >Description</label
-                >
-                <textarea
-                  name="description"
-                  id="caseDescription"
-                  class="form-control"
-                  rows="3"
-                ></textarea>
-                <div class="form-text">
-                  Provide a detailed description of the case.
-                </div>
-              </div>
-
-              <!-- Case Image Upload -->
-              <!-- <div class="input-group mb-3">
-                <input
-                  name="caseImageFile"
-                  type="file"
-                  class="form-control"
-                  id="inputGroupFile02"
-                />
-                <label class="input-group-text" for="inputGroupFile02"
-                  >Upload Image</label
-                >
-              </div> -->
-
-              <div class="container mt-6">
-                <div class="row">
-                  <!-- Date Picker -->
-                  <div class="col-12 col-md-6 mb-3">
-                    <label for="date-picker" class="form-label"
-                      >Select Appointment Date</label
+                  <div class="mb-3">
+                    <label for="caseDescription" class="form-label"
+                      >Description</label
                     >
+                    <textarea
+                      name="description"
+                      id="caseDescription"
+                      class="form-control"
+                      rows="3"
+                    ></textarea>
+                    <div class="form-text">
+                      Provide a detailed description of the case.
+                    </div>
+                  </div>
+
+                  <div class="input-group mb-3">
+                    <input
+                      name="caseImageFile"
+                      type="file"
+                      class="form-control"
+                      id="inputGroupFile02"
+                    />
+                    <label class="input-group-text" for="inputGroupFile02"
+                      >Upload Image</label
+                    >
+                  </div>
+                </div>
+
+                <!-- RIGHT COLUMN -->
+                <div class="col-12 col-lg-6">
+                  <div class="mb-3">
+                    <label for="date-picker" class="form-label">Select Appointment Date</label>
                     <input
                       id="date-picker"
                       class="flatpickr-input form-control"
                       type="text"
                       placeholder="Select Date"
-                      name="date"
+                      required
                     />
                   </div>
-                  <!-- Time Picker -->
-                  <div class="col-12 col-md-6 mb-3">
-                    <label for="time-picker" class="form-label"
-                      >Select Appointment Time</label
-                    >
-                    <select id="custom-time-picker" class="form-select">
-                      <option disabled selected>Select Time</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!--end::Body-->
 
-            <!--begin::Footer-->
+                  <input type="hidden" id="selected-time" />
+                  <input type="hidden" name="datetime" id="datetime-combined" />
+
+                  <div class="form-text mb-2">Click a time slot to select it.</div>
+                  <div class="border p-2 rounded bg-light" id="time-slot-display"></div>
+                </div>
+            </div>
+
             <div class="card-footer">
               <button type="submit" class="btn btn-primary">Submit</button>
             </div>
-            <!--end::Footer-->
           </form>
-          <!--end::Form-->
         </div>
       </div>
     </div>
   </div>
-
-  <!--end::Container-->
 </div>
-<!--end::App Content-->
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
-  // Date picker config
+  const events = <%- JSON.stringify(events) %>;
+  console.table(events);
+
+  function formatTime(hour, min) {
+    const h = hour % 12 || 12;
+    const ampm = hour >= 12 ? "pm" : "am";
+    return `${h}:${min.toString().padStart(2, '0')}${ampm}`;
+  }
+
+  function isAvailableSlot(slotStart, events) {
+    return events.some(event => {
+      const start = new Date(event.start);
+      const end = new Date(event.end);
+      return slotStart >= start && slotStart < end;
+    });
+  }
+
+  function renderSlots(dateStr) {
+    const display = document.getElementById("time-slot-display");
+    const selectedTimeInput = document.getElementById("selected-time");
+    const datetimeCombinedInput = document.getElementById("datetime-combined");
+
+    display.innerHTML = "";
+    selectedTimeInput.value = "";
+    datetimeCombinedInput.value = "";
+
+    const selectedDate = new Date(dateStr);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    const eventsOnDate = events.filter(event => {
+      const start = new Date(event.start);
+      const end = new Date(event.end);
+      return selectedDate <= end && selectedDate >= start.setHours(0, 0, 0, 0);
+    });
+
+    for (let hour = 9; hour < 17; hour++) {
+      for (let min = 0; min < 60; min += 30) {
+        const slotStart = new Date(dateStr);
+        slotStart.setHours(hour, min, 0, 0);
+
+        const available = isAvailableSlot(slotStart, eventsOnDate);
+        const label = formatTime(hour, min);
+
+        const slotEl = document.createElement("div");
+        slotEl.textContent = label;
+        slotEl.className = "time-slot " + (available ? "available" : "unavailable");
+
+        if (available) {
+          slotEl.addEventListener("click", () => {
+            // Deselect others
+            document.querySelectorAll(".time-slot.available").forEach(el =>
+              el.classList.remove("selected")
+            );
+            slotEl.classList.add("selected");
+
+            selectedTimeInput.value = label;
+
+            // Combine date + time to ISO format
+            const selectedDateTime = new Date(dateStr);
+            selectedDateTime.setHours(hour, min, 0, 0);
+            datetimeCombinedInput.value = selectedDateTime.toISOString();
+          });
+        }
+
+        display.appendChild(slotEl);
+      }
+    }
+  }
+
   flatpickr("#date-picker", {
     minDate: "today",
-    dateFormat: "d F Y",
+    dateFormat: "Y-m-d",
     disableMobile: true,
+    onChange: function (selectedDates, dateStr, instance) {
+      renderSlots(dateStr);
+    },
     onReady: function (selectedDates, dateStr, instance) {
-      // Disable year input
-      const yearInput = instance.calendarContainer.querySelector(
-        ".flatpickr-current-month .numInput"
-      );
+      const yearInput = instance.calendarContainer.querySelector(".flatpickr-current-month .numInput");
       if (yearInput) {
         yearInput.disabled = true;
         yearInput.style.opacity = "0.5";
         yearInput.style.pointerEvents = "none";
       }
-    },
-  });
-
-  function formatTime(hour, minute) {
-    const ampm = hour >= 12 ? "pm" : "am";
-    let displayHour = hour % 12;
-    displayHour = displayHour === 0 ? 12 : displayHour;
-    const displayMinute = minute.toString().padStart(2, "0");
-    return `${displayHour}:${displayMinute}${ampm}`;
-  }
-
-  function generateTimeRangeOptions(
-    startHour = 9,
-    endHour = 17,
-    interval = 30
-  ) {
-    const timePicker = document.getElementById("custom-time-picker");
-
-    for (let hour = startHour; hour < endHour; hour++) {
-      for (let min = 0; min < 60; min += interval) {
-        const start = formatTime(hour, min);
-        let endHourCalc = hour;
-        let endMin = min + interval;
-        if (endMin >= 60) {
-          endMin = 0;
-          endHourCalc += 1;
-        }
-        if (endHourCalc > endHour) break;
-
-        const end = formatTime(endHourCalc, endMin);
-        const option = document.createElement("option");
-        option.value = `${start} - ${end}`;
-        option.textContent = `${start} - ${end}`;
-        timePicker.appendChild(option);
-      }
     }
-  }
-
-  generateTimeRangeOptions();
+  });
 </script>
+
+

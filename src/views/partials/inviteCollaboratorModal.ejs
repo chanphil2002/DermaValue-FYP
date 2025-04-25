@@ -1,0 +1,54 @@
+<div
+  class="modal fade"
+  id="inviteCollaboratorModal"
+  tabindex="-1"
+  aria-labelledby="inviteCollaboratorLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="inviteCollaboratorLabel">
+          Invite Collaborator
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <!-- Put your invite form or content here -->
+        <form action="/cases/<%= caseDetails.id %>/collaborators" method="POST">
+          <!-- Example form field -->
+          <div class="mb-3">
+            <label for="clinicianUsername" class="form-label"
+              >Clinician Username</label
+            >
+            <% if (availableClinicians.length === 0) { %>
+            <p class="text-muted">
+              All clinicians in this clinic have been invited.
+            </p>
+            <% } else { %>
+            <select
+              class="form-select"
+              id="clinicianSelect"
+              name="clinicianId"
+              required
+            >
+              <option value="" disabled selected>Select a Clinician</option>
+              <% availableClinicians.forEach(function(clinician) { %>
+              <option value="<%= clinician.id %>">
+                <%= clinician.user.fullName || clinician.user.username %>
+              </option>
+              <% }); %>
+            </select>
+            <% } %>
+          </div>
+          <button type="submit" class="btn btn-primary">Send Invite</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

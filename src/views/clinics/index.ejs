@@ -75,7 +75,7 @@
             <div class="d-grid gap-2 mt-auto">
               <% if (user) { if (user.role === 'PATIENT') { %>
               <a
-                href="/cases/new/<%= clinic.id %>"
+                href="/cases/<%= clinic.id %>/new"
                 class="btn btn-primary w-100 py-2 rounded-pill"
               >
                 <i class="bi bi-calendar-check me-2"></i>Book Appointment Now

@@ -46,57 +46,60 @@ export const getNewCollaboratorForm: RequestHandler = async (req, res, next) => 
 export const createNewCollaborator: RequestHandler = async (req, res, next) => {
   try {
     assertHasUser(req);
-    
-    const { caseId } = req.params;
-    const { clinicianIds } = req.body; // Array of clinician IDs to invite
-    const loggedInUserId = req.user.clinicianId; // Authenticated clinician
 
-    if (!caseId || !clinicianIds || !Array.isArray(clinicianIds) || clinicianIds.length === 0) {
-      req.flash("error", "Case ID and clinician IDs are required.");
-      return res.status(400).redirect(`/cases/${caseId}`);
+    const { id } = req.params;
+    const { clinicianId } = req.body;
+    const loggedInUserId = req.user.clinicianId;
+
+    if (!id || !clinicianId) {
+      req.flash("error", "Case ID and clinician ID are required.");
+      return res.status(400).redirect(`/cases/${id}`);
     }
 
-    // Find the case and ensure the logged-in clinician is the primary clinician
+    // Find the case and ensure the logged-in user is the primary clinician
     const caseData = await prisma.case.findUnique({
-      where: { id: caseId },
-      include: { primaryClinician: true, MDTInvite: true },
+      where: { id },
+      include: {
+        primaryClinician: true,
+        MDTInvite: true,
+      },
     });
 
     if (!caseData) {
-      req.flash("error", "Case not found");
+      req.flash("error", "Case not found.");
       return res.status(404).redirect("/cases");
     }
 
     if (caseData.primaryClinicianId !== loggedInUserId) {
-      req.flash("error", "Only the primary clinician can invite MDT members");
-      return res.status(403).redirect(`/cases/${caseId}`);
+      req.flash("error", "Only the primary clinician can invite collaborators.");
+      return res.status(403).redirect(`/cases/${id}`);
     }
 
-    // Filter out already invited clinicians
-    const existingMDTClinicianIds = caseData.MDTInvite.map(mdt => mdt.clinicianId);
-    const newClinicians = clinicianIds.filter(id => !existingMDTClinicianIds.includes(id));
+    // Prevent duplicate invite
+    const alreadyInvited = caseData.MDTInvite.some(
+      (mdt) => mdt.clinicianId === clinicianId
+    );
 
-    if (newClinicians.length === 0) {
-      req.flash("error", "All selected clinicians are already part of the MDT");
-      return res.status(400).redirect(`/cases/${caseId}`);
+    if (alreadyInvited) {
+      req.flash("error", "This clinician has already been invited.");
+      return res.redirect(`/cases/${id}`);
     }
 
-    // Add clinicians to MDT
-    const mdtInvites = await prisma.mDTInvite.createMany({
-      data: newClinicians.map(clinicianId => ({
-        caseId,
+    // Invite the clinician
+    await prisma.mDTInvite.create({
+      data: {
+        caseId: id,
         clinicianId,
-      })),
+      },
     });
 
-    res.status(201).json({
-      message: "MDT members invited successfully",
-      invitedClinicians: newClinicians,
-    });
+    req.flash("success", "Clinician invited successfully.");
+    return res.redirect(`/cases/${id}`);
   } catch (error) {
     next(error);
   }
 };
+
 
 // Get MDT members for a case
 export const getMDTMembers: RequestHandler = async (req, res, next) => {

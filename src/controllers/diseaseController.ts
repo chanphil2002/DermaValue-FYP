@@ -81,7 +81,7 @@ export const getEditDiseaseFormById: RequestHandler = async (req, res) => {
       res.status(404).send("Disease not found");
     }
 
-    res.render("diseases/edit", { user, disease, title: "Edit Disease" }); // Adjust to your EJS path
+    res.render("diseases/edit", { user, disease, title: "Edit Disease"}); // Adjust to your EJS path
   } catch (error) {
     console.error(error);
     res.status(500).send("Something went wrong!");
@@ -91,31 +91,54 @@ export const getEditDiseaseFormById: RequestHandler = async (req, res) => {
 // Update an existing disease
 export const updateDisease: RequestHandler = async (req, res) => {
   const { id } = req.params;
-  const { name, promName, promQuestions } = req.body;
+  const { name, promName, questions } = req.body;
+
   try {
+    // Update the disease name
     const updatedDisease = await prisma.disease.update({
       where: { id },
       data: {
-        name
+        name,  // Only updating the name here
       },
     });
 
-    if (promName || promQuestions) {
-        await prisma.prom.update({
-          where: { diseaseId: id }, // This links the Prom form to the disease by the diseaseId
-          data: {
-            name: promName,
-            questions: promQuestions ? JSON.parse(promQuestions) : undefined, // Assuming promQuestions is a JSON string
-          },
-        });
-      }
+    // Format the PROM questions in the same way as the create function
+    const formattedQuestions = questions ? questions.map((q: string) => ({ question: q })) : [];
 
-    res.redirect(`/diseases/${id}`); // Redirect to the updated disease page
+    // Check if the disease has an existing PROM
+    const existingProm = await prisma.prom.findUnique({
+      where: { diseaseId: id },
+    });
+
+    if (existingProm) {
+      // If the PROM exists, update it
+      await prisma.prom.update({
+        where: { diseaseId: id },
+        data: {
+          name: promName || existingProm.name, // If no new PROM name, keep the existing one
+          questions: formattedQuestions.length > 0 ? formattedQuestions : existingProm.questions, // If no new questions, keep the existing ones
+        },
+      });
+    } else {
+      // If no PROM exists, create a new one
+      await prisma.prom.create({
+        data: {
+          name: promName, // The new PROM name
+          questions: formattedQuestions, // The formatted questions
+          diseaseId: id,  // Link the new PROM to the existing disease
+        },
+      });
+    }
+
+    // After successful update, redirect to the disease page
+    req.flash("success", "Disease updated successfully!");
+    res.redirect(`/diseases/${id}`);
   } catch (error) {
     console.error(error);
     res.status(500).send("Something went wrong!");
   }
 };
+
 
 // Delete a disease
 export const deleteDisease: RequestHandler = async (req, res) => {
