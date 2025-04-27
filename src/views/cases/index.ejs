@@ -59,34 +59,48 @@
             </tr>
           </thead>
           <tbody>
-            <% cases.forEach(function(caseItem) { %>
-            <tr>
-              <td><%= caseItem.id %></td>
-              <td><%= caseItem.patient.user.username %></td>
-              <td><%= caseItem.disease.name %></td>
-              <td><%= caseItem.primaryClinician.user.username %></td>
-              <td>
-                <% if (caseItem.isRecovered) { %>
-                <span class="badge text-bg-success">Recovered</span>
-                <% } else { %>
-                <span class="badge text-bg-warning">In Progress</span>
-                <% } %>
-              </td>
-              <td>
-                <a href="/cases/<%= caseItem.id %>" class="text-secondary">
-                  <i class="bi bi-search"></i> View
-                </a>
-              </td>
-              <td>
-                <%= new Date(caseItem.updatedAt).toLocaleString('en-US', {
-                weekday: 'short', year: 'numeric', month: 'short', day:
-                'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
-                %>
-              </td>
-            </tr>
-            <% }); %>
+            <% if (cases.length === 0) { %>
+              <tr>
+                <td colspan="7" class="text-center">No cases</td>
+              </tr>
+            <% } else { %>
+              <% cases.forEach(function(caseItem) { %>
+                <tr>
+                  <td><%= caseItem.id %></td>
+                  <td><%= caseItem.patient.user.username %></td>
+                  <td><%= caseItem.disease.name %></td>
+                  <td><%= caseItem.primaryClinician.user.username %></td>
+                  <td>
+                    <% if (caseItem.isRecovered) { %>
+                    <span class="badge text-bg-success">Recovered</span>
+                    <% } else { %>
+                    <span class="badge text-bg-warning">In Progress</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <a href="/cases/<%= caseItem.id %>" class="text-secondary">
+                      <i class="bi bi-search"></i> View
+                    </a>
+                  </td>
+                  <td>
+                    <%= new Date(caseItem.updatedAt).toLocaleString('en-US', {
+                    weekday: 'short', year: 'numeric', month: 'short', day:
+                    'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
+                    %>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+            <% if (user.clinicianId && !user.isGoogleCalendarConnected) { %>
+              <tr>
+                <td colspan="7" class="text-center text-danger">
+                  You are currently not connected to Google Calendar. Please connect to start receiving appointments.
+                </td>
+              </tr>
+            <% } %>
           </tbody>
         </table>
+        
       </div>
     </div>
     <!-- /.card -->

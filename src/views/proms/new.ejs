@@ -1,12 +1,12 @@
 <% layout('/layout/boilerplate') %>
 
-<!--begin::App Content Header-->
+<!-- Begin::App Content Header -->
 <div class="app-content-header">
-  <!--begin::Container-->
   <div class="container-fluid">
-    <!--begin::Row-->
     <div class="row">
-      <div class="col-sm-6"><h3 class="mb-0">General Form</h3></div>
+      <div class="col-sm-6">
+        <h3 class="mb-0">General Form</h3>
+      </div>
       <div class="col-sm-6">
         <ol class="breadcrumb float-sm-end">
           <li class="breadcrumb-item"><a href="#">Home</a></li>
@@ -16,28 +16,26 @@
         </ol>
       </div>
     </div>
-    <!--end::Row-->
   </div>
-  <!--end::Container-->
 </div>
-<!--end::App Content Header-->
+<!-- End::App Content Header -->
+
+<!-- Begin::App Content -->
 <div class="app-content">
-  <!--begin::Container-->
   <div class="container-fluid">
-    <!--begin::Row-->
     <div class="row g-4">
       <div class="col-md-6">
-        <!--begin::Quick Example-->
+        <!-- Begin::Card -->
         <div class="card card-primary card-outline mb-4 shadow-lg border-0">
-          <!--begin::Header-->
+          <!-- Begin::Card Header -->
           <div class="card-header bg-gradient-primary text-white border-0">
             <h3 class="card-title">Quick Example</h3>
           </div>
-          <!--end::Header-->
+          <!-- End::Card Header -->
 
-          <!--begin::Form-->
+          <!-- Begin::Form -->
           <form action="/cases/<%= caseId %>/proms" method="POST">
-            <!--begin::Body-->
+            <!-- Begin::Card Body -->
             <div class="card-body p-4">
               <% promForm.questions.forEach(function(question, index) { %>
               <div class="mb-4">
@@ -71,17 +69,18 @@
                   />
                   <span class="text-muted">10</span>
                 </div>
+
                 <div class="text-center mt-2">
-                  <small class="text-muted"
-                    >Please rate from 1 (Lowest) to 10 (Highest)</small
-                  >
+                  <small class="text-muted">
+                    Please rate from 1 (Lowest) to 10 (Highest)
+                  </small>
                 </div>
               </div>
               <% }); %>
             </div>
-            <!--end::Body-->
+            <!-- End::Card Body -->
 
-            <!--begin::Footer-->
+            <!-- Begin::Card Footer -->
             <div
               class="card-footer bg-transparent border-0 d-flex justify-content-end p-4"
             >
@@ -92,15 +91,13 @@
                 Submit Feedback
               </button>
             </div>
-            <!--end::Footer-->
+            <!-- End::Card Footer -->
           </form>
-          <!--end::Form-->
+          <!-- End::Form -->
         </div>
-        <!--end::Quick Example-->
+        <!-- End::Card -->
       </div>
     </div>
-    <!--end::Row-->
   </div>
-  <!--end::Container-->
 </div>
-<!--end::App Content-->
+<!-- End::App Content -->

@@ -39,10 +39,12 @@
             >
               <option value="" disabled selected>Select a Clinician</option>
               <% availableClinicians.forEach(function(clinician) { %>
-              <option value="<%= clinician.id %>">
-                <%= clinician.user.fullName || clinician.user.username %>
-              </option>
-              <% }); %>
+                <% if (clinician.userId !== user.id) { %> 
+                  <option value="<%= clinician.id %>">
+                    <%= clinician.user.fullName || clinician.user.username %>
+                  </option>
+                <% } %>
+              <% }); %>              
             </select>
             <% } %>
           </div>

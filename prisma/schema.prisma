@@ -26,9 +26,10 @@ model User {
   profileImageUrl String? // Cloudinary secure URL
   profileImageId  String? // Cloudinary public_id (e.g. for deleting/updating)
 
-  googleAccessToken    String?
-  googleRefreshToken   String?
-  googleTokenExpiresAt DateTime?
+  googleAccessToken         String?
+  googleRefreshToken        String?
+  googleTokenExpiresAt      DateTime?
+  isGoogleCalendarConnected Boolean   @default(false)
 }
 
 model Admin {
@@ -179,11 +180,14 @@ model Appointment {
 }
 
 model Disease {
-  id          String        @id @default(uuid())
-  name        String        @unique
-  prom        Prom?         @relation
-  promId      String        @default("default-prom-id")
-  description String?
+  id                         String  @id @default(uuid())
+  name                       String  @unique
+  prom                       Prom?   @relation
+  promId                     String  @default("default-prom-id")
+  description                String?
+  recoveryThreshold          Int? // PROM score threshold for recovery (example: 10)
+  expectedMaxScoreChangeRate Float? // Expected raw case score for 100 points (example: 0.05)
+
   Case        Case[]
   ClinicScore ClinicScore[]
 }

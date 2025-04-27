@@ -14,7 +14,7 @@ export const getLoginPage: RequestHandler = (req, res) => {
 
   // res.render("auth/login", { title: role.charAt(0).toUpperCase() + role.slice(1), loginPath } ); 
 
-  res.render("auth/login", { title: "Login", messages: res.locals.messages}); // Render the login page
+  res.render("auth/login", { title: "Login", messages: res.locals.messages }); // Render the login page
 }
 
 export const loginUser: RequestHandler = async (req, res, next) => {
@@ -43,7 +43,7 @@ export const loginUser: RequestHandler = async (req, res, next) => {
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) { 
+    if (!isMatch) {
       req.flash('error', 'Invalid Credentials!');
       return res.status(401).redirect("/login"); // Redirect to the login page
     }
@@ -76,11 +76,14 @@ export const loginUser: RequestHandler = async (req, res, next) => {
     if (roleTitle === $Enums.UserRole.CLINICIAN) {
       payload.clinicianId = user.clinicianId; // Add clinician-specific data
       payload.clinicId = user.clinician?.clinicId; // Add clinic-specific data
+      payload.isGoogleCalendarConnected = user.isGoogleCalendarConnected; // Add Google Calendar connection status
     } else if (roleTitle === $Enums.UserRole.PATIENT) {
       payload.patientId = user.patientId; // Add patient-specific data
     }
 
     const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "1h" });
+
+    console.log(payload)
 
     // Set HTTP-only Secure Cookie
     res.cookie("token", token, {
@@ -132,7 +135,7 @@ export const getPatientRegisterPage: RequestHandler = (req, res) => {
   // const registerPath = `/register/${role}`;
 
   // res.render("auth/register", { title: role.charAt(0).toUpperCase() + role.slice(1), registerPath } ); // Render the login page
-  res.render("auth/register-patient", {title: "Register as Patient"}); // Render the login page
+  res.render("auth/register-patient", { title: "Register as Patient" }); // Render the login page
 }
 
 export const getClinicianRegisterPage: RequestHandler = async (req, res) => {
@@ -143,31 +146,31 @@ export const getClinicianRegisterPage: RequestHandler = async (req, res) => {
   const clinics = await prisma.clinic.findMany(); // Fetch all clinics from the database
 
   // res.render("auth/register", { title: role.charAt(0).toUpperCase() + role.slice(1), registerPath } ); // Render the login page
-  res.render("auth/register-clinician", {title: "Register as Clinician", clinics}); // Render the login page
+  res.render("auth/register-clinician", { title: "Register as Clinician", clinics }); // Render the login page
 }
 
 export const registerUser: RequestHandler = async (req, res, next) => {
   try {
     const { role } = req.body;
-    const roleTitle = role.toUpperCase(); 
+    const roleTitle = role.toUpperCase();
 
     const { username, email, password, title, clinicId, medicalHistory } = req.body;
 
     if (!username || !email || !password || !roleTitle) {
       req.flash("error", "All fields are required!");
-      return res.redirect("/register/"+ roleTitle); // Redirect to the register page with the role
+      return res.redirect("/register/" + roleTitle); // Redirect to the register page with the role
     }
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
 
     if (existingUser) {
       req.flash("error", "User already exists!");
-      return res.redirect("/register/"+ roleTitle); // Redirect to the register page with the role
+      return res.redirect("/register/" + roleTitle); // Redirect to the register page with the role
     }
 
     if (roleTitle === $Enums.UserRole.CLINICIAN && !clinicId) {
       req.flash("error", "You need to attach a Clinic before proceeding.");
-      return res.redirect("/register/"+ roleTitle); // Redirect to the register page with the role
+      return res.redirect("/register/" + roleTitle); // Redirect to the register page with the role
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -176,7 +179,7 @@ export const registerUser: RequestHandler = async (req, res, next) => {
       const newUser = await tx.user.create({
         data: { username, email, password: hashedPassword, role: roleTitle as $Enums.UserRole },
       });
-      
+
       let clinicianId = null;
       let patientId = null;
 

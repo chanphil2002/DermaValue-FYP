@@ -70,7 +70,7 @@
       <!--begin::Col-->
       <div class="col-lg-3 col-6">
         <!--begin::Small Box Widget 1-->
-        <div class="small-box text-bg-primary">
+        <div class="small-box bg-secondary bg-gradient text-white">
           <div class="inner">
             <h3><%= caseDetails.appointments.length %></h3>
             <p>Appointments</p>
@@ -92,7 +92,7 @@
       <!--end::Col-->
       <div class="col-lg-3 col-6">
         <!--begin::Small Box Widget 2-->
-        <div class="small-box text-bg-success">
+        <div class="small-box bg-dark bg-gradient text-white">
           <div class="inner">
             <h3>
               <%= caseDetails.promResponses.length %><sup class="fs-5"></sup>
@@ -105,6 +105,7 @@
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
             aria-hidden="true"
+            style="color: white"
           >
             <path
               d="M18.375 2.25c-1.035 0-1.875.84-1.875 1.875v15.75c0 1.035.84 1.875 1.875 1.875h.75c1.035 0 1.875-.84 1.875-1.875V4.125c0-1.036-.84-1.875-1.875-1.875h-.75zM9.75 8.625c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v11.25c0 1.035-.84 1.875-1.875 1.875h-.75a1.875 1.875 0 01-1.875-1.875V8.625zM3 13.125c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v6.75c0 1.035-.84 1.875-1.875 1.875h-.75A1.875 1.875 0 013 19.875v-6.75z"
@@ -116,7 +117,7 @@
       <!--end::Col-->
       <div class="col-lg-3 col-6">
         <!--begin::Small Box Widget 3-->
-        <div class="small-box text-bg-warning">
+        <div class="small-box bg-secondary bg-gradient text-white">
           <div class="inner">
             <h3>RM<%= caseDetails.totalCost %></h3>
             <p>Total Cost Paid</p>
@@ -138,7 +139,7 @@
       <!--end::Col-->
       <div class="col-lg-3 col-6">
         <!--begin::Small Box Widget 4-->
-        <div class="small-box text-bg-danger">
+        <div class="small-box bg-dark bg-gradient text-white">
           <div class="inner">
             <h3><%= caseDetails.disease.name %></h3>
             <p>Disease Name</p>
@@ -149,6 +150,7 @@
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
             aria-hidden="true"
+            style="color: white"
           >
             <path
               clip-rule="evenodd"
@@ -171,7 +173,7 @@
       <div class="col-lg-6 d-flex flex-column gap-3">
         <!--begin::PROM List Widget-->
         <div
-          class="card card-primary card-outline"
+          class="card card-primary card-outline flex-grow-1"
           style="height: 50%; overflow-y: auto"
         >
           <div class="card-header d-flex align-items-center">
@@ -180,14 +182,22 @@
               caseDetails.promResponses[0].prom ?
               caseDetails.promResponses[0].prom.name : "No PROM Available" %>
             </h3>
-            <% if (user.role === "PATIENT" && !caseDetails.isRecovered) { %>
+            <% if (user.role === "PATIENT" && !caseDetails.isRecovered) { %> <%
+            const hasCompletedAppointment = caseDetails.appointments &&
+            caseDetails.appointments.some(app => app.status === 'COMPLETED');
+            const lastPromForm = caseDetails.promResponses &&
+            caseDetails.promResponses[caseDetails.promResponses.length - 1];
+            const isPromFormOverTwoDays = !lastPromForm || new
+            Date(lastPromForm.submittedAt) <= new Date(new Date().setDate(new
+            Date().getDate() - 2)); if (hasCompletedAppointment &&
+            isPromFormOverTwoDays) { %>
             <a
               href="/cases/<%= caseDetails.id %>/proms/new"
               class="text-success text-decoration-none fw-bold ms-auto"
             >
               Fill PROM Form
             </a>
-            <% } %>
+            <% } %> <% } %>
           </div>
           <!-- /.card-header -->
           <div class="card-body p-0" style="height: 50%; overflow-y: auto">
@@ -235,8 +245,9 @@
                   <tr>
                     <td colspan="4" class="text-end">
                       <strong>Case Score:</strong>
-                      <% if (caseDetails.caseScore) { %> <%=
-                      caseDetails.caseScore %> <% } else { %>
+                      <% if (caseDetails.caseScore !== null &&
+                      caseDetails.caseScore !== undefined) { %> <%=
+                      Math.round(caseDetails.caseScore) %> <% } else { %>
                       <em>Still in Calculation</em>
                       <% } %>
                     </td>

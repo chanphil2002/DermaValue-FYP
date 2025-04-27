@@ -11,16 +11,16 @@ const router = express.Router();
 
 router.get("/new", authenticateJWT, clinicController.showNewClinicPage);
 
+router.get("/:id/edit", authenticateJWT, clinicController.getEditClinicByIdForm);
+
 router.post("/", upload.single('clinicImageFile'), authenticateJWT, clinicController.createClinic);
 
 router.get("/", authenticateJWT, clinicController.getClinics);
 
-router.get("/all", authenticateJWT, clinicController.showIndexPage);
-
 router.route("/:id")
     .all(authenticateJWT)
     .get(clinicController.getClinicById)
-    .patch(clinicController.updateClinic)
+    .patch(upload.single('clinicImageFile'), clinicController.updateClinic)
     .delete(clinicController.deleteClinic);
 
 export default router;

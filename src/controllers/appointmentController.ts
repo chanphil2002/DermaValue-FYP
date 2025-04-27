@@ -21,12 +21,18 @@ export const googleCallback: RequestHandler = async (req, res, next) => {
   try {
     const { profile, tokens, user } = await handleGoogleCallback(req.query.code as string);
 
+    const payload: Record<string, any> = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      profileImageUrl: user.profileImageUrl,
+      clinicianId: user.clinicianId,
+      isGoogleCalendarConnected: user.isGoogleCalendarConnected,
+    };
+
     // Create JWT
-    const jwtToken = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET!,
-      { expiresIn: '1h' }
-    );
+    const jwtToken = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "1h" });
 
     // Set cookie
     res.cookie('token', jwtToken, {
@@ -143,73 +149,73 @@ export const readAppointmentById: RequestHandler = async (req, res, next) => {
 };
 
 export const writeDiagnosis: RequestHandler = async (req, res, next) => {
-    try {
-      assertHasUser(req);
-      const { appointmentId } = req.params; // Appointment ID
-      const { diagnosisDescription, treatmentPlan, price } = req.body;
-      const loggedInUserId = req.user.id;
-      const parsedPrice = parseFloat(price);
-  
-      if (!diagnosisDescription || !treatmentPlan) {
-        throw createHttpError(400, "Diagnosis and treatment plan are required.");
-      }
-  
-      // Fetch the appointment, including clinician details
-      const appointment = await prisma.appointment.findUnique({
-        where: { id: appointmentId },
-        include: {
-          clinician: {
-            include: {
-              user: true,
-            },
-          }, case: true
-        },
-      });
-  
-      if (!appointment) {
-        throw createHttpError(404, "Appointment not found.");
-      }
-  
-      // Ensure the appointment is confirmed
-      if (appointment.status !== $Enums.AppointmentStatus.CONFIRMED) {
-        throw createHttpError(400, "Only confirmed appointments can have a diagnosis.");
-      }
-  
-      // Ensure only the assigned clinician can write the diagnosis
-      if (!appointment.clinician || appointment.clinician.user.id.toString() !== loggedInUserId.toString()) {
-        throw createHttpError(403, "You are not authorized to write the diagnosis for this appointment.");
-      }
-  
-      if (!appointment.caseId) {
-        throw createHttpError(400, "Case ID is required to update the total price.");
-      }
-      
-      const updatedTotalPrice = await updateCaseTotalPrice(appointment.caseId, parsedPrice);
-      
-      // Update the appointment with diagnosis and treatment plan
-      const updatedAppointment = await prisma.appointment.update({
-        where: { id: appointmentId },
-        data: {
-          diagnosisDescription,
-          treatmentPlan,
-          price: parsedPrice,
-          status: $Enums.AppointmentStatus.COMPLETED, // Mark appointment as completed
-        },
-      });
+  try {
+    assertHasUser(req);
+    const { appointmentId } = req.params; // Appointment ID
+    const { diagnosisDescription, treatmentPlan, price } = req.body;
+    const loggedInUserId = req.user.id;
+    const parsedPrice = parseFloat(price);
 
-      await prisma.case.update({
-        where: { id: appointment.caseId ?? undefined },
-        data: {
-          totalCost: updatedTotalPrice, // Update the case total price
-        },
-      });
-  
-      res.redirect(`/cases/${appointment.caseId}/clinic/${appointment.case?.clinicId}/appointments/${appointmentId}`); // Redirect to the appointment details page
-  
-    } catch (error) {
-      next(error);
+    if (!diagnosisDescription || !treatmentPlan) {
+      throw createHttpError(400, "Diagnosis and treatment plan are required.");
     }
-  };
+
+    // Fetch the appointment, including clinician details
+    const appointment = await prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: {
+        clinician: {
+          include: {
+            user: true,
+          },
+        }, case: true
+      },
+    });
+
+    if (!appointment) {
+      throw createHttpError(404, "Appointment not found.");
+    }
+
+    // Ensure the appointment is confirmed
+    if (appointment.status !== $Enums.AppointmentStatus.CONFIRMED) {
+      throw createHttpError(400, "Only confirmed appointments can have a diagnosis.");
+    }
+
+    // Ensure only the assigned clinician can write the diagnosis
+    if (!appointment.clinician || appointment.clinician.user.id.toString() !== loggedInUserId.toString()) {
+      throw createHttpError(403, "You are not authorized to write the diagnosis for this appointment.");
+    }
+
+    if (!appointment.caseId) {
+      throw createHttpError(400, "Case ID is required to update the total price.");
+    }
+
+    const updatedTotalPrice = await updateCaseTotalPrice(appointment.caseId, parsedPrice);
+
+    // Update the appointment with diagnosis and treatment plan
+    const updatedAppointment = await prisma.appointment.update({
+      where: { id: appointmentId },
+      data: {
+        diagnosisDescription,
+        treatmentPlan,
+        price: parsedPrice,
+        status: $Enums.AppointmentStatus.COMPLETED, // Mark appointment as completed
+      },
+    });
+
+    await prisma.case.update({
+      where: { id: appointment.caseId ?? undefined },
+      data: {
+        totalCost: updatedTotalPrice, // Update the case total price
+      },
+    });
+
+    res.redirect(`/cases/${appointment.caseId}/clinic/${appointment.case?.clinicId}/appointments/${appointmentId}`); // Redirect to the appointment details page
+
+  } catch (error) {
+    next(error);
+  }
+};
 
 async function updateCaseTotalPrice(caseId: string, appointmentPrice: number): Promise<number> {
   // Get all completed appointments for the case

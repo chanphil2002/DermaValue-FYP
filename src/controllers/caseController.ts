@@ -71,23 +71,35 @@ export const getAllCasesByUsers: RequestHandler = async (req, res, next) => {
       isNew: c.updatedAt ? c.updatedAt > oneDayAgo : false,
     }));
 
-    res.render("cases/index", { title: "Cases", cases: casesWithNewFlag, user, messages: res.locals.messages});
+    console.log(user);
+
+    res.render("cases/index", { title: "Cases", cases: casesWithNewFlag, user, messages: res.locals.messages });
   } catch (error) {
     next(error);
   }
 }
 
-export const getBookNewAppointmentForm : RequestHandler = async (req, res, next) => {
+export const getBookNewAppointmentForm: RequestHandler = async (req, res, next) => {
   try {
     assertHasUser(req);
     const user = req.user;
     const { clinicId } = req.params;
 
+    // Fetch clinic data and include only clinicians with Google Calendar connected
     const clinic = await prisma.clinic.findUnique({
       where: { id: clinicId },
       include: {
-        clinicians: { include: { user: true } } 
-       },
+        clinicians: {
+          where: {
+            user: {
+              isGoogleCalendarConnected: true,  // Filter clinicians with Google Calendar connected
+            },
+          },
+          include: {
+            user: true,  // Include user details to check for Google Calendar connection
+          },
+        },
+      },
     });
 
     // Loop through clinicians and get availability for each
@@ -97,7 +109,7 @@ export const getBookNewAppointmentForm : RequestHandler = async (req, res, next)
     }
 
     if (clinic.clinicians.length === 0) {
-      req.flash("error", "No clinicians found for the selected clinic.");
+      req.flash("error", "Currently there are no available clinicians to book appointment.");
       return res.redirect("/clinics");
     }
 
@@ -117,10 +129,11 @@ export const getBookNewAppointmentForm : RequestHandler = async (req, res, next)
 
     const allAvailableSlots = await getClinicGoogleCalendarAvailability(clinic);
 
-    res.render("cases/new", 
-      { title: "Create Appointment", 
-        user, 
-        clinic, 
+    res.render("cases/new",
+      {
+        title: "Create Appointment",
+        user,
+        clinic,
         diseases,
         events: allAvailableSlots,
         existingCase
@@ -164,7 +177,7 @@ export const bookAppointment: RequestHandler = async (req, res, next) => {
       req.flash("error", "All fields are required.");
       return res.status(400).redirect(`/clinics/${clinic}/cases/new`);
     }
-    
+
     if (!patientId) {
       req.flash("error", "Patient ID is required.");
       return res.status(400).redirect("/dashboard");
@@ -263,7 +276,7 @@ export const bookAppointment: RequestHandler = async (req, res, next) => {
 
     req.flash('success', 'Successfully booked an appointment!');
     res.redirect(`/cases/${existingCaseForClinic.id}`); // Redirect to the case details page
-    
+
   } catch (error) {
     next(error);
   }
@@ -306,7 +319,7 @@ export const readCaseById: RequestHandler = async (req, res, next) => {
           },
         }, // Include the PROM responses associated with the case
 
-        clinic: true, 
+        clinic: true,
         MDTNote: {
           include: {
             clinician: {
@@ -348,14 +361,18 @@ export const readCaseById: RequestHandler = async (req, res, next) => {
       !existingMDTClinicianIds.includes(clinician.id)
     );
 
-    console.log(caseDetails);
+    const lastPromForm = caseDetails.promResponses && caseDetails.promResponses[caseDetails.promResponses.length - 1];
+
+    const isPromFormOverTwoDays = !lastPromForm || new
+      Date(lastPromForm.submittedAt) <= new Date(new Date().setDate(new
+        Date().getDate() - 2));
 
     res.render("cases/show", { title: "Case ID", caseDetails, availableClinicians, user });
 
   }
   catch (error) {
     next(error);
-  }  
+  }
 }
 
 export const acceptOrRejectCase: RequestHandler = async (req, res, next) => {

@@ -15,7 +15,20 @@
     </ul>
     <!--end::Start Navbar Links-->
     <!--begin::End Navbar Links-->
-    <ul class="navbar-nav ms-auto">
+    <ul class="navbar-nav ms-auto d-flex align-items-center">
+      <!--begin::Google Calendar Connection-->
+      <li class="nav-item d-none d-md-block">
+        <% if (user.isGoogleCalendarConnected) { %>
+          <span class="text-success">
+            <i class="bi bi-check-circle-fill"></i> Connected to Google Calendar
+          </span>
+        <% } else { %>
+          <a href="/google-calendar/auth/google" class="btn btn-outline-primary btn-sm">
+            Connect to Google Calendar
+          </a>
+        <% } %>
+      </li>
+      <!--end::Google Calendar Connection-->
       <li class="nav-item dropdown user-menu">
         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
           <img

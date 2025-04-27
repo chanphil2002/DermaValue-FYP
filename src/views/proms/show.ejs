@@ -36,67 +36,76 @@
         </div>
       </div>
       <!--begin::Progress-->
-      <div class="card card-primary card-outline mb-4">
+      <div class="card card-dark card-outline mb-4 shadow-sm">
         <!--begin::Header-->
-        <div class="card-header">
-          <div class="card-title fs-4 font-weight-bold">PROM Form Progress</div>
+        <div class="card-header bg-secondary bg-gradient text-white">
+          <div class="card-title fs-4 font-weight-bold">
+            <i class="fas fa-check-circle"></i> PROM Form Progress
+          </div>
         </div>
         <!--end::Header-->
+        
         <!--begin::Body-->
         <div class="card-body p-4">
           <!-- Loop through the responses and display them -->
-          <% if (prom.responses && prom.responses.length > 0) { %>
-          <div class="mb-3">
-            <h5 class="text-muted">Questions & Scores</h5>
-            <ul class="list-group">
-              <% prom.responses.forEach((response, index) => { %>
-              <li
-                class="list-group-item d-flex justify-content-between align-items-center p-3"
-              >
-                <span class="font-weight-bold"><%= response.question %></span>
-                <span class="badge badge-primary badge-pill fs-5 text-dark"
-                  ><%= response.score %></span
-                >
-              </li>
-              <% }) %>
-            </ul>
-          </div>
+          <% if (prom.responses && prom.responses.length > 0 && prom.prom && prom.prom.questions) { %>
+            <div class="mb-4">
+              <h5 class="text-muted font-weight-bold">Questions & Scores</h5>
+              <ul class="list-group">
+                <% prom.prom.questions.forEach((question, index) => { %>
+                  <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                    <div class="flex-grow-1">
+                      <p class="fs-5 mb-0"><%= question.question %></p>
+                    </div>
+                    <% if (prom.responses[index]) { %>
+                      <span class="fs-5 fw-bold text-dark ms-3">
+                        <%= prom.responses[index].score %> out of 10
+                      </span>
+                    <% } else { %>
+                      <span class="fs-5 fw-bold text-warning ms-3">
+                        No response
+                      </span>
+                    <% } %>
+                  </li>
+                <% }) %>
+              </ul>
+            </div>
           <% } else { %>
-          <p class="text-warning">No responses available.</p>
+            <p class="text-warning">No responses available.</p>
           <% } %>
-
+          
+          <% 
+            const numQuestions = prom.prom.questions.length;  // Get the number of questions
+            const maxScore = numQuestions * 10;  // Each question has a fixed 10 points
+            const totalScore = prom.totalScore || 0;  // Total score, default to 0 if not available
+            const progressPercentage = 100 - ((totalScore / maxScore) * 100);  // Invert the progress calculation
+          %>
+      
           <!-- Display the total score -->
           <div class="mt-4">
             <h5 class="font-weight-bold text-dark">Total Score</h5>
-            <p class="fs-4 text-success"><%= prom.totalScore %></p>
+            <p class="fs-4 text-success"><%= prom.totalScore %> / <%= maxScore %></p>
           </div>
-
+      
           <!-- Display progress based on total score -->
-          <div
-            class="progress mb-3"
-            role="progressbar"
-            aria-label="PROM Total Score"
-            aria-valuenow="<%= prom.totalScore %>"
-            aria-valuemin="0"
-            aria-valuemax="100"
-          >
-            <div
-              class="progress-bar bg-success"
-              style="width: <%= prom.totalScore || 0 %>"
-              aria-valuenow="<%= prom.totalScore || 0 %>"
-              aria-valuemin="0"
-              aria-valuemax="100"
-            ></div>
+          <div class="progress mb-3" role="progressbar" aria-label="PROM Total Score" aria-valuenow="<%= totalScore %>" aria-valuemin="0" aria-valuemax="<%= maxScore %>">
+            <div class="progress-bar bg-success" style="width: <%= progressPercentage.toFixed(2) %>%" aria-valuenow="<%= totalScore %>" aria-valuemin="0" aria-valuemax="<%= maxScore %>">
+            </div>
           </div>
-
+      
           <!-- Show a message indicating the progress completion -->
           <div class="text-center mt-3">
-            <span class="font-weight-bold text-muted"
-              >Overall Satisfaction Score of: <%= prom.totalScore %>% of the
-              full assessment</span
-            >
+            <span class="font-weight-bold text-muted">
+              You got a Recovery Score of <%= progressPercentage.toFixed(2) %>% of the full assessment
+            </span>
+          </div>
+
+          <div class="mb-3 me-3">
+            <a href="javascript:history.back()" class="btn btn-secondary">Go Back</a>
           </div>
         </div>
+
+
         <!--end::Body-->
       </div>
       <!--end::Progress-->

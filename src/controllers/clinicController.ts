@@ -14,15 +14,6 @@ export const showNewClinicPage: RequestHandler = (req, res) => {
   res.render("clinics/new", { user });
 }
 
-export const showIndexPage: RequestHandler = async (req, res) => {
-  assertHasUser(req);
-  const user = req.user;
-
-  const clinics = await prisma.clinic.findMany();
-
-  res.render("clinics/index", { clinics, user, messages: res.locals.messages, title: "Clinics" });
-}
-
 // **Create a new clinic**
 export const createClinic: RequestHandler = async (req, res, next) => {
   try {
@@ -30,7 +21,7 @@ export const createClinic: RequestHandler = async (req, res, next) => {
     const { name, location } = req.body;
     const clinicImageFile = req.file;
 
-    if (!name || !location ) {
+    if (!name || !location) {
       req.flash("error", "Name and location are required.");
       return res.status(400).redirect("/clinics/new");
     }
@@ -89,8 +80,19 @@ export const getClinics: RequestHandler = async (req, res, next) => {
     assertHasUser(req, true);
     const user = req.user || null;
 
-    const clinics = await prisma.clinic.findMany();
-    res.render('clinics/index', { clinics, user, title: "Clinics" });
+    const clinics = await prisma.clinic.findMany({
+      include: {
+        Case: true,
+      }
+    });
+
+    // Map clinics to also have a 'totalCases' field
+    const clinicsWithCaseCounts = clinics.map((clinic) => ({
+      ...clinic,
+      totalCases: clinic.Case.filter(c => c.isRecovered).length,
+    }));
+
+    res.render('clinics/index', { clinics: clinicsWithCaseCounts, user, title: "Clinics" });
   } catch (error) {
     next(error);
   }
@@ -108,32 +110,97 @@ export const getClinicById: RequestHandler = async (req, res, next) => {
       include: {
         clinicians: {
           include: { user: true },
-        }
+        },
+        Case: true,
       }
     });
 
-    console.log(clinic)
+    const clinicScores = await prisma.clinicScore.findMany({
+      where: {
+        clinicId: id, // or any other criteria
+      },
+      include: {
+        disease: true,
+        clinic: true,
+      },
+    });
+
+    clinicScores.sort((a, b) => (b.avgPromScore || 0) - (a.avgPromScore || 0));
 
     if (!clinic) {
       req.flash("error", "Clinic not found.");
       return res.status(404).redirect("/clinics");
     }
 
-    res.status(200).render("clinics/show", { clinic, title: "Clinic Details", user });
+    const totalCases = clinic.Case.filter(c => c.isRecovered).length;
+
+    res.status(200).render("clinics/show", { clinic, totalCases, title: "Clinic Details", user, clinicScores, messages: res.locals.messages });
   } catch (error) {
     next(error);
   }
 };
 
+// Get Clinic by ID (to display the edit form with pre-filled data)
+export const getEditClinicByIdForm: RequestHandler = async (req, res, next) => {
+  try {
+    assertHasUser(req, true);
+    const user = req.user || null;
+    const { id } = req.params;
+
+    const clinic = await prisma.clinic.findUnique({
+      where: { id },
+      include: {
+        clinicians: {
+          include: { user: true },
+        },
+        Case: true,
+      },
+    });
+
+    if (!clinic) {
+      req.flash("error", "Clinic not found.");
+      return res.status(404).redirect("/clinics");
+    }
+
+    res.status(200).render("clinics/edit", { clinic, title: "Edit Clinic", user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 // **Update a clinic by ID**
 export const updateClinic: RequestHandler = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    const { name, location } = req.body;
+    const clinicImageFile = req.file;
+
+    const updatedClinicData: { name: any; location: any; profileImageUrl?: string; profileImageId?: string } = {
+      name,
+      location,
+    };
+
+    if (clinicImageFile) {
+      try {
+        const filePath = clinicImageFile.path;
+        // Upload the image to Cloudinary and get the result
+        const result = await uploadClinicImage(filePath, id);  // Use clinic ID as public_id
+
+        // Update the clinic with the new image URL and public_id
+        updatedClinicData.profileImageUrl = result.uploadResult.secure_url;
+        updatedClinicData.profileImageId = result.uploadResult.public_id;
+
+        console.log("Image uploaded successfully:", result.uploadResult.secure_url);
+      } catch (error) {
+        req.flash("error", "Failed to upload clinic image.");
+        return res.status(500).redirect(`/clinics/${id}/edit`);
+      }
+    }
 
     const updatedClinic = await prisma.clinic.update({
       where: { id },
-      data: updateData,
+      data: updatedClinicData
     });
 
     if (!updatedClinic) {
@@ -141,7 +208,8 @@ export const updateClinic: RequestHandler = async (req, res, next) => {
       return res.status(404).redirect("/clinics");
     }
 
-    res.status(200).json(updatedClinic);
+    req.flash("success", "Clinic updated successfully!");
+    res.status(200).redirect(`/clinics/${id}`); // Redirect to the updated clinic's page
 
   } catch (error) {
     next(error);
@@ -158,7 +226,7 @@ export const deleteClinic: RequestHandler = async (req, res, next) => {
     });
 
     res.status(200).json({ message: "Clinic deleted successfully" });
-    
+
   } catch (error) {
     next(error);
   }

@@ -177,8 +177,6 @@ export const fillProm: RequestHandler = async (req, res, next) => {
             question: item.text, // Store the question text
         }));
 
-        console.log("Formatted Responses:", formattedResponses);
-
         if (!loggedInUserId) {
             req.flash("error", "User ID is missing or undefined.");
             return res.status(401).redirect("/login");
@@ -330,157 +328,174 @@ export const fillProm: RequestHandler = async (req, res, next) => {
         // Fetch the PROM data by ID
         const prom = await prisma.promResponse.findUnique({
             where: { id: promId, caseId: req.params.id }, // Ensure the case ID matches
+            include: {
+                prom: true,
+            },
         });
   
         if (!prom) {
             res.status(404).json({ success: false, message: "PROM not found" });
             return;
         }
+
+        console.log(prom);
   
         // Return the PROM data for the patient
         res.render("proms/show", { prom: { ...prom }, user });
 
-        console.log(typeof(prom.responses));
-
         } catch (error) {
             next(error);
         }
-  };
+    };
 
 
-  // New helper function (returns data instead of sending responses)
+// Evaluate recovery status for a case
 async function evaluateRecovery(caseId: string) {
     try {
-        console.log("Evaluating recovery for case:", caseId);
-
         const patientCase = await prisma.case.findUnique({
             where: { id: caseId },
-            include: { 
+            include: {
                 promResponses: {
-                    orderBy: {
-                        submittedAt: 'desc'
+                    orderBy: { submittedAt: 'desc' }
+                },
+                disease: {
+                    select: {
+                        recoveryThreshold: true,
+                        expectedMaxScoreChangeRate: true,
                     }
-                } 
+                }
             },
         });
 
         if (!patientCase) return { error: "Case not found" };
-        if (patientCase.isRecovered) { console.log("Already recovered"); }
-        if (patientCase.isRecovered) return { isRecovered: true, message: "Already recovered" };
+        if (patientCase.isRecovered) {
+            console.log("Already recovered");
+            return { isRecovered: true, message: "Already recovered" };
+        }
 
-        // We already know there are at least 2 responses
-        const latestScore = patientCase.promResponses[0].totalScore;
-        const previousScore = patientCase.promResponses[1].totalScore;
+        const { promResponses, disease } = patientCase;
 
-        if (latestScore <= 10 && latestScore < previousScore) {
-            // Step 1: Calculate case score and update recovery status
-            const updatedCase = await calculateCaseScore(caseId, latestScore);
+        if (!disease?.recoveryThreshold || !disease?.expectedMaxScoreChangeRate) {
+            return { error: "Disease recovery settings missing" };
+        }
 
-            console.log(updatedCase, updatedCase.caseScore);
+        if (promResponses.length < 2) {
+            return { error: "Not enough PROM responses to evaluate" };
+        }
 
-            if (!updatedCase || updatedCase.caseScore === null) {
+        const latestScore = promResponses[0].totalScore;
+        const previousScore = patientCase.promStart;
+
+        console.log("Latest score:", latestScore, "Previous score:", previousScore);
+
+        console.log("Recovery threshold:", disease.recoveryThreshold);
+        
+        const isRecovered = latestScore <= disease.recoveryThreshold;
+
+        console.log("Is recovered:", isRecovered);
+
+        if (isRecovered) {
+            const updatedCase = await calculateCaseScore({
+                caseId,
+                promStart: previousScore ?? 0,
+                promEnd: latestScore,
+                expectedMaxScoreChangeRate: disease.expectedMaxScoreChangeRate
+            });
+
+            if (!updatedCase) {
                 return { error: "Error calculating case score" };
             }
 
             console.log("Newly recovered", latestScore, previousScore);
 
-            // Step 4: Update ClinicScore with the retrieved caseScore (promScore)
             await updateClinicScoreOnRecovery({
                 clinicId: updatedCase.clinicId,
                 diseaseId: updatedCase.diseaseId,
-                promScore: updatedCase.caseScore,  // Use the caseScore as promScore
+                promScore: updatedCase.caseScore ?? 0,
                 treatmentStart: updatedCase.treatmentStart,
-                treatmentEnd: updatedCase.treatmentEnd || new Date(),
-                totalCost: updatedCase.totalCost || 0
+                treatmentEnd: updatedCase.treatmentEnd ?? new Date(),
+                totalCost: updatedCase.totalCost,
             });
 
-            return { 
-                isRecovered: true, 
-                message: "Newly recovered", 
+            return {
+                isRecovered: true,
+                message: "Newly recovered",
                 scores: { latest: latestScore, previous: previousScore }
-            }
+            };
+        } else {
+            console.log("Not recovered yet", latestScore, previousScore);
+            return {
+                isRecovered: false,
+                message: "Not recovered yet",
+                scores: { latest: latestScore, previous: previousScore }
+            };
         }
-
-        console.log("Not recovered yet", latestScore, previousScore);
-
-        return {
-            isRecovered: false,
-            message: "Not recovered yet",
-            scores: { latest: latestScore, previous: previousScore }
-        };
     } catch (error) {
         console.error("Error evaluating recovery:", error);
-        return { error: "Error evaluating recovery status" };
+        return { error: "Internal error" };
     }
 }
 
+// Calculate and update case score
+async function calculateCaseScore(params: {
+    caseId: string,
+    promStart: number,
+    promEnd: number,
+    expectedMaxScoreChangeRate: number
+}) {
+    const { caseId, promStart, promEnd, expectedMaxScoreChangeRate } = params;
 
-export const calculateCaseScore = async (caseId: string, latestPromEnd: number): Promise<any> => {
     try {
         console.log("Calculating case score for case:", caseId);
 
-        // Step 1: Update `promEnd` first
-        await prisma.case.update({
-            where: { id: caseId },
-            data: { promEnd: latestPromEnd },
-        });
-
-        // Step 2: Fetch updated case details after setting `promEnd`
         const patientCase = await prisma.case.findUnique({
             where: { id: caseId },
             select: {
-                promStart: true,
-                promEnd: true,
                 totalCost: true,
                 treatmentStart: true,
                 treatmentEnd: true,
-                diseaseId: true,
-            },
+            }
         });
-  
+
         if (!patientCase) {
             throw new Error("Case not found");
         }
-    
-        const { promStart, promEnd, totalCost, treatmentStart, treatmentEnd } = patientCase;
 
-        console.log("PROM Start:", promStart);
-        console.log("PROM End:", promEnd);
-        console.log("treatmentStart:", treatmentStart);
-        console.log("treatmentEnd:", treatmentEnd);
+        const { totalCost, treatmentStart, treatmentEnd } = patientCase;
 
-        if (promStart === null || promEnd === null || !treatmentStart) {
-            throw new Error("Missing data to calculate case score");
+        if (!totalCost || !treatmentStart) {
+            throw new Error("Missing cost or treatment start date");
         }
 
-        const newTreatmentEnd = treatmentEnd || new Date(); // Use existing end date or set to now
+        const endDate = treatmentEnd || new Date();
         await prisma.case.update({
             where: { id: caseId },
-            data: { treatmentEnd: newTreatmentEnd },
+            data: { treatmentEnd: endDate }
         });
-    
-        const durationRecovered = Math.ceil(
-            (newTreatmentEnd.getTime() - treatmentStart.getTime()) / (1000 * 60 * 60 * 24) // Convert ms to days
+
+        const durationRecovered = Math.max(
+            Math.ceil((endDate.getTime() - treatmentStart.getTime()) / (1000 * 60 * 60 * 24)),
+            1 // at least 1 day
         );
 
-        if (durationRecovered <= 0) {
-            throw new Error("Invalid recovery duration");
-        }
+        console.log("Duration recovered in days:", durationRecovered);
+        console.log("Total cost:", totalCost);
+        console.log("PROM start score:", promStart);
+        console.log("PROM end score:", promEnd);
+        console.log("Expected max score change rate:", expectedMaxScoreChangeRate);
 
-        
-        const rawCaseScore = (promStart - promEnd) / totalCost * durationRecovered;
+        const rawCaseScore = ((promStart - promEnd) / totalCost) * durationRecovered;
+        const normalizedScore = Math.min(
+            (rawCaseScore / expectedMaxScoreChangeRate) * 100,
+            100
+        );
 
-        const MAX_RAW_VALUE_SCORE = 0.05;
-
-        const normalizedScore = Math.min((rawCaseScore / MAX_RAW_VALUE_SCORE) * 100, 100);
-
-        // Update case with the calculated score and recovery status
         const updatedCase = await prisma.case.update({
             where: { id: caseId },
             data: {
-                caseScore: normalizedScore,
                 isRecovered: true,
-                promEnd: latestPromEnd
+                caseScore: normalizedScore,
+                promEnd: promEnd
             },
             select: {
                 caseScore: true,
@@ -492,14 +507,12 @@ export const calculateCaseScore = async (caseId: string, latestPromEnd: number):
             }
         });
 
-        console.log(`Case score calculated and case marked as recovered for case ${caseId}: ${normalizedScore}`);
-
+        console.log(`Case score calculated for case ${caseId}: ${normalizedScore}`);
         return updatedCase;
 
     } catch (error) {
-        console.error(`Error calculating case score: ${(error as any).message}`);
-        
+        console.error("Error calculating case score:", error);
         return null;
     }
-};
+}
   

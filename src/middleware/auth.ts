@@ -36,7 +36,7 @@ export const authenticateJWT: RequestHandler = (req, res, next) => {
 export const authorizeRole = (allowedRoles: $Enums.UserRole[]): RequestHandler => {
   return (req, res, next) => {
     try {
-      if (!req.user) throw createHttpError(401, "User not authenticated");
+      if (!req.user) res.status(401).redirect("/login");
 
       const userRole = (req.user as { role: $Enums.UserRole }).role;
 
