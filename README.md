@@ -61,7 +61,7 @@ CLOUDINARY_SECRETS=your_api_secret
 # Google OAuth (Calendar API)
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_CALLBACK_URL=http://localhost:3000/oauth2callback
+GOOGLE_CALLBACK_URL=http://localhost:3000/google-calendar/oauth2callback
 
 ```
 
