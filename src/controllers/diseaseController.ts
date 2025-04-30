@@ -9,7 +9,7 @@ export const showNewDiseaseFormPage: RequestHandler = (req, res) => {
 
     console.log(user);
 
-    res.render("diseases/new", { title: "New Diseases", user }); // Adjust to your EJS path
+    res.render("diseases/new", { title: "New Diseases", user, messages: res.locals.messages}); // Adjust to your EJS path
 };
 
 // Create a new disease
@@ -41,8 +41,8 @@ export const createNewDisease: RequestHandler = async (req, res) => {
 
     res.redirect("/diseases"); // Redirect to the diseases list or appropriate page
   } catch (error) {
-    console.error(error);
-    res.status(500).send("Something went wrong!");
+    req.flash("error", "Failed to create disease. Please try again.");
+    res.status(500).redirect("/diseases/new"); // Redirect to the new disease form on error
   }
 };
 
