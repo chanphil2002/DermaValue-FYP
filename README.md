@@ -70,8 +70,9 @@ GOOGLE_CALLBACK_URL=http://localhost:3000/google-calendar/oauth2callback
 Generate Prisma client and migrate database:
 
 ```bash
-npx prisma generate
-npx prisma migrate dev --name init
+npx prisma install         # if needed to ensure packages
+npx prisma generate        # regenerate Prisma client
+npx prisma migrate dev     # applies existing migrations to local DB
 ```
 
 ### 5. Run the Application
