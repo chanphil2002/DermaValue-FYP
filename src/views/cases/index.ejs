@@ -13,17 +13,11 @@
                 'https://res.cloudinary.com/ddohywyci/image/upload/v1743808822/DermaValue/users/m77o7kfexwmqgyhqcfkg.jpg' %>"
             class="user-image rounded-circle shadow me-2"
             alt="User Image"
-            style="width: 50px; height: 50px"
+            style="width: 50px; height: 50px; object-fit: cover"
           />
 
           <h4 class="mb-0"><%= user.username %>'s Cases</h4>
         </div>
-      </div>
-      <div class="col-sm-6">
-        <ol class="breadcrumb float-sm-end">
-          <li class="breadcrumb-item"><a href="#">Home</a></li>
-          <li class="breadcrumb-item active" aria-current="page">Case</li>
-        </ol>
       </div>
     </div>
     <!--end::Row-->
@@ -60,47 +54,45 @@
           </thead>
           <tbody>
             <% if (cases.length === 0) { %>
-              <tr>
-                <td colspan="7" class="text-center">No cases</td>
-              </tr>
-            <% } else { %>
-              <% cases.forEach(function(caseItem) { %>
-                <tr>
-                  <td><%= caseItem.id %></td>
-                  <td><%= caseItem.patient.user.username %></td>
-                  <td><%= caseItem.disease.name %></td>
-                  <td><%= caseItem.primaryClinician.user.username %></td>
-                  <td>
-                    <% if (caseItem.isRecovered) { %>
-                    <span class="badge text-bg-success">Recovered</span>
-                    <% } else { %>
-                    <span class="badge text-bg-warning">In Progress</span>
-                    <% } %>
-                  </td>
-                  <td>
-                    <a href="/cases/<%= caseItem.id %>" class="text-secondary">
-                      <i class="bi bi-search"></i> View
-                    </a>
-                  </td>
-                  <td>
-                    <%= new Date(caseItem.updatedAt).toLocaleString('en-US', {
-                    weekday: 'short', year: 'numeric', month: 'short', day:
-                    'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
-                    %>
-                  </td>
-                </tr>
-              <% }); %>
-            <% } %>
-            <% if (user.clinicianId && !user.isGoogleCalendarConnected) { %>
-              <tr>
-                <td colspan="7" class="text-center text-danger">
-                  You are currently not connected to Google Calendar. Please connect to start receiving appointments.
-                </td>
-              </tr>
+            <tr>
+              <td colspan="7" class="text-center">No cases</td>
+            </tr>
+            <% } else { %> <% cases.forEach(function(caseItem) { %>
+            <tr>
+              <td><%= caseItem.id %></td>
+              <td><%= caseItem.patient.user.username %></td>
+              <td><%= caseItem.disease.name %></td>
+              <td><%= caseItem.primaryClinician.user.username %></td>
+              <td>
+                <% if (caseItem.isRecovered) { %>
+                <span class="badge text-bg-success">Recovered</span>
+                <% } else { %>
+                <span class="badge text-bg-warning">In Progress</span>
+                <% } %>
+              </td>
+              <td>
+                <a href="/cases/<%= caseItem.id %>" class="text-secondary">
+                  <i class="bi bi-search"></i> View
+                </a>
+              </td>
+              <td>
+                <%= new Date(caseItem.updatedAt).toLocaleString('en-US', {
+                weekday: 'short', year: 'numeric', month: 'short', day:
+                'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
+                %>
+              </td>
+            </tr>
+            <% }); %> <% } %> <% if (user.clinicianId &&
+            !user.isGoogleCalendarConnected) { %>
+            <tr>
+              <td colspan="7" class="text-center text-danger">
+                You are currently not connected to Google Calendar. Please
+                connect to start receiving appointments.
+              </td>
+            </tr>
             <% } %>
           </tbody>
         </table>
-        
       </div>
     </div>
     <!-- /.card -->

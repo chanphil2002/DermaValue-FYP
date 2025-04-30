@@ -1,11 +1,38 @@
 <% layout('/layout/boilerplate') %>
 
+<style>
+  .slider-wrapper {
+    position: relative;
+    width: 80%;
+    padding-top: 35px; /* ADD padding for badge space */
+  }
+
+  .range-value {
+    position: absolute;
+    top: 0; /* Now badge sits nicely inside the wrapper */
+    background: #0d6efd;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    transition: left 0.1s ease;
+    pointer-events: none;
+  }
+
+  .form-range {
+    position: relative;
+    z-index: 1;
+  }
+</style>
+
 <!-- Begin::App Content Header -->
 <div class="app-content-header">
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-6">
-        <h3 class="mb-0">General Form</h3>
+        <h3 class="mb-0"><%= promForm.name %></h3>
       </div>
       <div class="col-sm-6">
         <ol class="breadcrumb float-sm-end">
@@ -38,7 +65,8 @@
             <!-- Begin::Card Body -->
             <div class="card-body p-4">
               <% promForm.questions.forEach(function(question, index) { %>
-              <div class="mb-4">
+              <div class="mb-1">
+                <!-- more space between questions -->
                 <label
                   for="question<%= index %>"
                   class="form-label text-dark fw-bold fs-5"
@@ -53,27 +81,29 @@
                   value="<%= question.question %>"
                 />
 
-                <!-- Slider Input -->
+                <!-- Slider Input with moving badge -->
                 <div class="d-flex align-items-center justify-content-between">
                   <span class="text-muted">1</span>
-                  <input
-                    type="range"
-                    class="form-range"
-                    id="question<%= index %>"
-                    name="questions[<%= index %>][score]"
-                    min="1"
-                    max="10"
-                    value="5"
-                    step="1"
-                    style="width: 80%"
-                  />
-                  <span class="text-muted">10</span>
-                </div>
 
-                <div class="text-center mt-2">
-                  <small class="text-muted">
-                    Please rate from 1 (Lowest) to 10 (Highest)
-                  </small>
+                  <div class="slider-wrapper">
+                    <input
+                      type="range"
+                      class="form-range"
+                      id="question<%= index %>"
+                      name="questions[<%= index %>][score]"
+                      min="1"
+                      max="10"
+                      value="5"
+                      step="1"
+                      style="width: 100%"
+                      oninput="updateSliderValue(this)"
+                    />
+                    <div class="range-value" id="value-question<%= index %>">
+                      5
+                    </div>
+                  </div>
+
+                  <span class="text-muted">10</span>
                 </div>
               </div>
               <% }); %>
@@ -101,3 +131,25 @@
   </div>
 </div>
 <!-- End::App Content -->
+
+<script>
+  function updateSliderValue(slider) {
+    const valueElement = document.getElementById(`value-${slider.id}`);
+    valueElement.innerText = slider.value;
+
+    // Calculate thumb position
+    const min = parseInt(slider.min) || 0;
+    const max = parseInt(slider.max) || 100;
+    const percent = (slider.value - min) / (max - min);
+
+    const sliderWidth = slider.offsetWidth;
+    const thumbOffset = percent * sliderWidth;
+
+    valueElement.style.left = `${thumbOffset}px`;
+  }
+
+  // Initialize all sliders on page load
+  document.querySelectorAll('input[type="range"]').forEach((slider) => {
+    updateSliderValue(slider);
+  });
+</script>

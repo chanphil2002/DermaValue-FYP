@@ -10,9 +10,10 @@
       </div>
       <div class="col-sm-6">
         <ol class="breadcrumb float-sm-end">
-          <li class="breadcrumb-item"><a href="#">Home</a></li>
-          <li class="breadcrumb-item"><a href="/leaderboard">Leaderboard</a></li>
-          <li class="breadcrumb-item active" aria-current="page"><%= clinic.name %></li>
+          <li class="breadcrumb-item"><a href="/clinics">Clinics</a></li>
+          <li class="breadcrumb-item active" aria-current="page">
+            <%= clinic.name %>
+          </li>
         </ol>
       </div>
     </div>
@@ -25,8 +26,12 @@
     <% if (!user) { %>
     <div class="row g-4 mb-3">
       <div class="col-12">
-        <div class="callout callout-info d-flex justify-content-between align-items-center mb-3">
-          <p class="mb-0">Login or Register to Start Booking Appointment Now!</p>
+        <div
+          class="callout callout-info d-flex justify-content-between align-items-center mb-3"
+        >
+          <p class="mb-0">
+            Login or Register to Start Booking Appointment Now!
+          </p>
         </div>
       </div>
     </div>
@@ -35,9 +40,10 @@
     <div class="row g-4 align-items-stretch">
       <!-- Left Column -->
       <div class="col-lg-5 col-md-12 d-flex flex-column gap-4">
-        
         <!-- Clinic Info Card -->
-        <div class="card border-0 shadow rounded-4 overflow-hidden flex-grow-1 d-flex flex-column">
+        <div
+          class="card border-0 shadow rounded-4 overflow-hidden flex-grow-1 d-flex flex-column"
+        >
           <div class="position-relative">
             <img
               src="<%= clinic.profileImageUrl || '/images/default-clinic.jpg' %>"
@@ -53,29 +59,28 @@
             </p>
             <p class="mb-1">
               <i class="bi bi-people-fill me-1"></i>
-              Active Clinicians: 
-              <%= clinic.clinicians.filter(c => c.approved).length %>
+              Active Clinicians: <%= clinic.clinicians.filter(c =>
+              c.approved).length %>
             </p>
             <div class="d-flex justify-content-between align-items-center">
               <p class="mb-0">
                 <i class="bi bi-clipboard-check-fill me-1"></i>
-                Cases Solved: 
-                <%= totalCases || 0 %>
+                Cases Solved: <%= totalCases || 0 %>
               </p>
-        
+
               <% if (user && user.role === 'PATIENT') { %>
-                <a href="/cases/<%= clinic.id %>/new" class="btn btn-primary">
-                  <i class="bi bi-calendar-plus me-1"></i> Book Appointment
-                </a>
-              <% } %>
-              <% if (user && user.role === 'ADMIN') { %>
-                <a href="/clinics/<%= clinic.id %>/edit" class="btn btn-secondary bg-gradient">
-                  Edit Clinic
-                </a>
+              <a href="/cases/<%= clinic.id %>/new" class="btn btn-primary">
+                <i class="bi bi-calendar-plus me-1"></i> Book Appointment
+              </a>
+              <% } %> <% if (user && user.role === 'ADMIN') { %>
+              <a
+                href="/clinics/<%= clinic.id %>/edit"
+                class="btn btn-secondary bg-gradient"
+              >
+                Edit Clinic
+              </a>
               <% } %>
             </div>
-
-
           </div>
         </div>
 
@@ -93,23 +98,23 @@
               </thead>
               <tbody>
                 <% if (!clinicScores || clinicScores.length === 0) { %>
-                  <tr>
-                    <td colspan="3" class="text-center">No rankings available</td>
-                  </tr>
-                <% } else { %>
-                  <% clinicScores.forEach((score, index) => { %>
-                    <tr>
-                      <td><%= score.disease.name %></td>
-                      <td><%= score.avgPromScore ? score.avgPromScore.toFixed(2) : 'N/A' %></td>
-                      <td><%= score.totalCases %></td>
-                    </tr>
-                  <% }); %>
-                <% } %>
+                <tr>
+                  <td colspan="3" class="text-center">No rankings available</td>
+                </tr>
+                <% } else { %> <% clinicScores.forEach((score, index) => { %>
+                <tr>
+                  <td><%= score.disease.name %></td>
+                  <td>
+                    <%= score.avgPromScore ? score.avgPromScore.toFixed(2) :
+                    'N/A' %>
+                  </td>
+                  <td><%= score.totalCases %></td>
+                </tr>
+                <% }); %> <% } %>
               </tbody>
             </table>
           </div>
         </div>
-
       </div>
 
       <!-- Right Column -->
@@ -128,30 +133,30 @@
               </thead>
               <tbody>
                 <% if (clinic.clinicians.length === 0) { %>
-                  <tr>
-                    <td colspan="4" class="text-center">No clinicians available</td>
-                  </tr>
-                <% } else { %>
-                  <% clinic.clinicians.forEach(clinician => { %>
-                  <tr>
-                    <td><%= clinician.user.username %></td>
-                    <td><%= clinician.title %></td>
-                    <td><%= clinician.user.email %></td>
-                    <td>
-                      <span class="badge text-bg-<%= clinician.approved ? 'success' : 'secondary' %>">
-                        <%= clinician.approved ? 'Verified' : 'Inactive' %>
-                      </span>
-                    </td>
-                  </tr>
-                  <% }); %>
-                <% } %>
+                <tr>
+                  <td colspan="4" class="text-center">
+                    No clinicians available
+                  </td>
+                </tr>
+                <% } else { %> <% clinic.clinicians.forEach(clinician => { %>
+                <tr>
+                  <td><%= clinician.user.username %></td>
+                  <td><%= clinician.title %></td>
+                  <td><%= clinician.user.email %></td>
+                  <td>
+                    <span
+                      class="badge text-bg-<%= clinician.approved ? 'success' : 'secondary' %>"
+                    >
+                      <%= clinician.approved ? 'Verified' : 'Inactive' %>
+                    </span>
+                  </td>
+                </tr>
+                <% }); %> <% } %>
               </tbody>
             </table>
           </div>
         </div>
       </div>
-
     </div>
-
   </div>
 </div>
